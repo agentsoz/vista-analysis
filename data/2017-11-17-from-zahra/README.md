@@ -12,13 +12,13 @@
 
 The following list describes the files contained in the directory
 
-** transit
+# transit
 
  * transitnetwork.xml.gz
  * transitschedule_simplified.xml.gz
  * transitvehicles.xml.gz
 
-** mergedGmelbNetwork.xml.gz
+# mergedGmelbNetwork.xml.gz
 
 
 ## Contributors
