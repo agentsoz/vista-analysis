@@ -1,27 +1,3 @@
-# VISTA directory
-
-* [About this directory](#about-this-directory)
-* [Files Contained](#files-contained)
-* [Contributors](#contributors)
-
-
-## About this directory
-
-
-## Files contained
-
-The following list describes the files contained in the directory
-
-* Persons_VISTA09_v3_VISTA_Online.csv
-* Trips_VISTA09_v3_VISTA_Online.csv
-* VISTA_v3_Online_Data_CSV_2009.zip
-* vista09-documentation-v10.pdf
-
-## Contributors
-
-* Kai Nagel, TU Berlin
-* Karthikey Surineni, RMIT University
-
-
-
-
+version https://git-lfs.github.com/spec/v1
+oid sha256:6951e7211c69026dca383fa89fd890982d1148445719ef889abe3737a00c54e6
+size 827
