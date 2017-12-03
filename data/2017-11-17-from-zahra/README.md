@@ -18,7 +18,7 @@ The following list describes the files contained in the directory
  * transitschedule_simplified.xml.gz
  * transitvehicles.xml.gz
 
-### mergedGmelbNetwork.xml.gz
+* mergedGmelbNetwork.xml.gz
 
 
 ## Contributors
