@@ -27,6 +27,7 @@ The following list describes the files contained in the directory
 ## Contributors
 
 * Jonathan Arundel, RMIT University
+* Kai Nagel, TU Berlin
 * Karthikey Surineni, RMIT University
 
 
