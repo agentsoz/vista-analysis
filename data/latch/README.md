@@ -27,7 +27,7 @@ The following list describes the files contained in the directory
 ## Contributors
 
 * Karthikey Surineni, RMIT University
-* Bhagya Wickramasignhe
+* Bhagya Wickramasignhe, RMIT University
 
 
 
