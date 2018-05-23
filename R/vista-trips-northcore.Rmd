@@ -1,0 +1,90 @@
+---
+title: "VISTA analyse"
+author: "Maitreya Wagh"
+date: "5/22/2018"
+output:
+  html_document:
+    keep_md: yes
+---
+To analyse behavior of people living in NorthCote
+
+Reading CSV files and subsetting data
+```{r}
+Households_VISTA09_v3_VISTA_Online <- read.csv("~/Desktop/gitr/Households_VISTA09_v3_VISTA_Online.csv", header=TRUE)
+NCHouse <- subset(Households_VISTA09_v3_VISTA_Online, Households_VISTA09_v3_VISTA_Online$HOMESLA=="Darebin (C) - Northcote")
+View (NCHouse)
+NCHouse <- NCHouse[order(NCHouse$HHID),]
+```
+To find details of members of these households, we need to subset Persons Census data:
+
+```{r}
+Persons_VISTA09_v3_VISTA_Online <- read.csv("~/Desktop/gitr/Persons_VISTA09_v3_VISTA_Online.csv")
+AllPerson <- Persons_VISTA09_v3_VISTA_Online[order(Persons_VISTA09_v3_VISTA_Online$HHID),]
+View(AllPerson)
+```
+[Can't find number of members per household. Shouldn't this data be here?]
+# ```{r}
+# i = 6474
+# j = 1
+# while (i <8417){
+#   if (AllPerson[i,2] != NCHouse[j,1]){
+#     AllPerson[i,2]<-"Y09H010104"
+#   }
+#   else{
+#     i <- k
+#     j=j+1 }
+# }
+# ```
+
+# ```{r}
+# NCPerson <- AllPerson[c(6475:8417),]
+# install.packages("reshape")
+# require(reshape)
+# NCPerson = transform(NCPerson, )
+# View(NCPerson)
+# ```
+# 
+# 
+
+# ```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+# ```
+
+# ```{r}
+# NCPerson$Location <-NA
+# i = 6475
+# j = 1
+# for (i in 1:100){
+#   for (j in 1:128){
+#     if (isTRUE(NCPerson[i,2]==NCHouse[j,1])){
+#       NCPerson[i,10]<-"NorthCote"
+#       break
+#     }
+#   }
+# }
+# for (i in 600:1943){
+#   for (j in 1:128){
+#     if (isTRUE(NCPerson[i,2]==NCHouse[j,1])){
+#       NCPerson[i,10]<-"NorthCote"
+#       break
+#     }
+#   }
+# }
+# ```
+# 
+# ```{r}
+# NCPerson <- subset(NCPerson, NCPerson$Location=="NorthCote")
+# NCSchool <- subset(JourneyToEducation_VISTA09_v3_VISTA_Online, JourneyToEducation_VISTA09_v3_VISTA_Online$ORIGSLA=="Darebin (C) - Northcote")
+# View(NCSchool)
+# NCSchool$Speed <- NCSchool$JTEDIST/NCSchool$JTETravelTime * 60
+# ```
+# 
+# 
+# ```{r}
+# library (plotrix)
+# VehSpeed <- with(NCSchool,tapply(NCSchool$JTEMODE,  NCSchool$Speed, FUN = mean))
+# VehSpeedSD <- with(NCSchool,tapply(NCSchool$JTEMODE,  NCSchool$Speed, FUN = sd))
+# b <- barplot(VehSpeed, ylim = c(0,50), col="white", width=0.5, space=0.5)
+# plotCI(b, NCSchool, uiw=VehSpeedSD, add=TRUE, pch=NA)
+```
+
