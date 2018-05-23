@@ -7,6 +7,9 @@ output:
     keep_md: yes
 ---
 To analyse behavior of people living in NorthCote
+```{r}
+Edu <- read.csv("../data/vista/JourneyToEducation_VISTA09_v3_VISTA_Online.csv")
+```
 
 Reading CSV files and subsetting data
 ```{r}
