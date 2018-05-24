@@ -6,88 +6,51 @@ output:
   html_document:
     keep_md: yes
 ---
-To analyse behavior of people living in NorthCote, based on trips to school
+To analyse behavior of people living in NorthCote
 ```{r}
-Edu <- read.csv("../data/vista/JourneyToEducation_VISTA09_v3_VISTA_Online.csv")
+House.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/H_VISTA12_16_SA1_V1.csv")
+Person.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/P_VISTA12_16_SA1_V1.csv")
+House.NorthCote <- subset(House.NorthCote, House.NorthCote$HOMESLA == "Darebin (C) - Northcote")
+Person.NorthCote <- subset(Person.NorthCote, Person.NorthCote$HOMESLA == "Darebin (C) - Northcote")
+
 ```
 
-Reading CSV files and subsetting data
+Basic distributions throughout the suburb [ggplot2]
 ```{r}
-Households_VISTA09_v3_VISTA_Online <- read.csv("~/Desktop/gitr/Households_VISTA09_v3_VISTA_Online.csv", header=TRUE)
-NCHouse <- subset(Households_VISTA09_v3_VISTA_Online, Households_VISTA09_v3_VISTA_Online$HOMESLA=="Darebin (C) - Northcote")
-View (NCHouse)
-NCHouse <- NCHouse[order(NCHouse$HHID),]
+AgeDist <- ggplot(Person.NorthCote, aes(x = Person.NorthCote$AGEGROUP)) + geom_bar(stat="count")
+AgeDist
 ```
-To find details of members of these households, we need to subset Persons Census data:
-
+Analysing number of kids 
 ```{r}
-Persons_VISTA09_v3_VISTA_Online <- read.csv("~/Desktop/gitr/Persons_VISTA09_v3_VISTA_Online.csv")
-AllPerson <- Persons_VISTA09_v3_VISTA_Online[order(Persons_VISTA09_v3_VISTA_Online$HHID),]
-View(AllPerson)
+Person.NorthCote$AgeGroup[Person.NorthCote$AGE < 21] <- "Child"
+Person.NorthCote$AgeGroup[Person.NorthCote$AGE > 21] <- "Adult"
+Person.NorthCote$AgeGroup[Person.NorthCote$AGE < 5] <- "Baby"
 ```
-[Can't find number of members per household. Shouldn't this data be here?]
-# ```{r}
-# i = 6474
-# j = 1
-# while (i <8417){
-#   if (AllPerson[i,2] != NCHouse[j,1]){
-#     AllPerson[i,2]<-"Y09H010104"
-#   }
-#   else{
-#     i <- k
-#     j=j+1 }
-# }
-# ```
 
-# ```{r}
-# NCPerson <- AllPerson[c(6475:8417),]
-# install.packages("reshape")
-# require(reshape)
-# NCPerson = transform(NCPerson, )
-# View(NCPerson)
-# ```
-# 
-# 
 
-# ```{r setup, include=FALSE}
-# knitr::opts_chunk$set(echo = TRUE)
-# ```
+Getting information on a basic household
+```{r}
 
-# ```{r}
-# NCPerson$Location <-NA
-# i = 6475
-# j = 1
-# for (i in 1:100){
-#   for (j in 1:128){
-#     if (isTRUE(NCPerson[i,2]==NCHouse[j,1])){
-#       NCPerson[i,10]<-"NorthCote"
-#       break
-#     }
-#   }
-# }
-# for (i in 600:1943){
-#   for (j in 1:128){
-#     if (isTRUE(NCPerson[i,2]==NCHouse[j,1])){
-#       NCPerson[i,10]<-"NorthCote"
-#       break
-#     }
-#   }
-# }
-# ```
-# 
-# ```{r}
-# NCPerson <- subset(NCPerson, NCPerson$Location=="NorthCote")
-# NCSchool <- subset(JourneyToEducation_VISTA09_v3_VISTA_Online, JourneyToEducation_VISTA09_v3_VISTA_Online$ORIGSLA=="Darebin (C) - Northcote")
-# View(NCSchool)
-# NCSchool$Speed <- NCSchool$JTEDIST/NCSchool$JTETravelTime * 60
-# ```
-# 
-# 
-# ```{r}
-# library (plotrix)
-# VehSpeed <- with(NCSchool,tapply(NCSchool$JTEMODE,  NCSchool$Speed, FUN = mean))
-# VehSpeedSD <- with(NCSchool,tapply(NCSchool$JTEMODE,  NCSchool$Speed, FUN = sd))
-# b <- barplot(VehSpeed, ylim = c(0,50), col="white", width=0.5, space=0.5)
-# plotCI(b, NCSchool, uiw=VehSpeedSD, add=TRUE, pch=NA)
+Edu.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/JTE_VISTA12_16_sa1_V1.csv")
+Edu.NorthCote <- Edu.NorthCote[Edu.NorthCote$PERSID %in% Person.NorthCote$PERSID,]
+Work.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/JTW_VISTA12_16_sa1_V1.csv")
+Work.NorthCote <- Work.NorthCote[Work.NorthCote$PERSID %in% Person.NorthCote$PERSID,]
+Stop.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
+Stop.NorthCote <- Stop.NorthCote[Stop.NorthCote$PERSID %in% Person.NorthCote$PERSID,]
+Trip.NorthCote <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
+Trip.NorthCote <- Trip.NorthCote[Trip.NorthCote$PERSID %in% Person.NorthCote$PERSID,]
+View(Edu.NorthCote)
+View(Work.NorthCote)
+View(Stop.NorthCote)
+View(Trip.NorthCote)
+```
+
+
+Analysing Education Patterns
+```{r}
+table(Edu.NorthCote$DESTPURP1)
+ggplot(Edu.NorthCote, aes(x = Edu.NorthCote$STARTIME)) + geom_bar()
+ggplot(Edu.NorthCote, aes(x = Edu.NorthCote$ARRTIME)) + geom_bar()
+
 ```
 
