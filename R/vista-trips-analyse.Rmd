@@ -1,0 +1,71 @@
+---
+title: "VISTA analyse"
+author: "Maitreya Wagh"
+date: "5/22/2018"
+output:
+  html_document:
+    keep_md: yes
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
+# Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
+# View(Stops)
+table(Trips$STOPS)
+```
+
+Analysing trips separately for now
+
+```{r}
+oneStopTrip <- subset(Trips, Trips$STOP == 1)
+oneStopTrip$Speed = (oneStopTrip$Dist1/oneStopTrip$Time1)*60
+twoStopTrip <- subset(Trips, Trips$STOP == 1)
+twoStopTrip$Speed = (twoStopTrip$Dist1/twoStopTrip$Time1)*60
+threeStopTrip <- subset(Trips, Trips$STOP == 1)
+threeStopTrip$Speed = (threeStopTrip$Dist1/threeStopTrip$Time1)*60
+```
+
+```{r}
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$TRAVDOW, oneStopTrip$Speed, colour=oneStopTrip$TRAVDOW))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot
+```
+We see that day that does not matter much as the plot is very similar
+```{r}
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$TRAVELPERIOD, oneStopTrip$Speed, colour=oneStopTrip$TRAVELPERIOD))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot
+```
+
+```{r}
+Scatterplot<-ggplot(twoStopTrip, aes(twoStopTrip$TRAVELPERIOD, twoStopTrip$Speed, colour=twoStopTrip$TRAVELPERIOD))+geom_point(position="jitter")+facet_grid(~twoStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot
+```
+
+```{r}
+Scatterplot<-ggplot(threeStopTrip, aes(threeStopTrip$TRAVELPERIOD, threeStopTrip$Speed, colour=threeStopTrip$TRAVELPERIOD))+geom_point(position="jitter")+facet_grid(~threeStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot
+```
+
+
+
+
+
+```{r}
+Person <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/P_VISTA12_16_SA1_V1.csv")
+Person$AgeGroup[Person.NorthCote$AGE < 21] <- "Child"
+Person$AgeGroup[Person.NorthCote$AGE > 21] <- "Adult"
+Person$AgeGroup[Person.NorthCote$AGE < 5] <- "Baby"
+
+table (Stop1$ORIGPLACE1)
+nightwork <- subset(Stop1, Stop1$ORIGPLACE1 == "Workplace")
+
+```
+
+```{r}
+nightperson <- Person[Person$PERSID %in% nightwork$PERSID, ]
+nightnonwork <- subset(nightperson, nightperson$ANYWORK == "No")
+nightactivities_nonwork <- Trips[Trips$PERSID %in% nightnonwork$PERSID,]
+```
+
