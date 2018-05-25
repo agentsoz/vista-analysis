@@ -6,14 +6,20 @@ output:
   html_document:
     keep_md: yes
 ---
+
+Here we have a few things. 
+a) What does speed of travel depend on 
+b) Nightworkers
+
+Today, let's examine the various activities done
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
 Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
-# Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
-# View(Stops)
+Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
 table(Trips$STOPS)
 ```
 
@@ -69,3 +75,34 @@ nightnonwork <- subset(nightperson, nightperson$ANYWORK == "No")
 nightactivities_nonwork <- Trips[Trips$PERSID %in% nightnonwork$PERSID,]
 ```
 
+
+
+
+
+
+c) Activities
+
+```{r}
+StopsFiltered <- Stops[, -c(6,7,9,12,14,15,17,16,18,21,23,25,27:50,61)]
+StopsFiltered <- StopsFiltered[, -c(48:57,29,42:44)]
+table(StopsFiltered$DESTPURP1)
+StopsFiltered$AVESPEED <- as.numeric(as.character(StopsFiltered$AVESPEED))
+StopsFiltered$DURATION <- as.numeric(as.character(StopsFiltered$DURATION))
+ActivityAnalysis <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+ActivityAnalysis <- aggregate(. ~ ActivityAnalysis$DESTPURP1 + ActivityAnalysis$TRAVMONTH + ActivityAnalysis$TRAVDOW + ActivityAnalysis$MAINMODE, data = ActivityAnalysis, FUN = mean, na.rm = TRUE)
+ActivityAnalysis <- ActivityAnalysis[, -c(5,6,7,9)]
+ActivityAnalysis <- ActivityAnalysis[order(ActivityAnalysis$`ActivityAnalysis$TRAVMONTH`, ActivityAnalysis$`ActivityAnalysis$TRAVDOW`, ActivityAnalysis$`ActivityAnalysis$MAINMODE`),]
+
+
+
+
+```
+
+```{r}
+ActivityAnalysisTab <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+ActivityAnalysisTab <- as.data.frame(table(ActivityAnalysisTab$DESTPURP1, ActivityAnalysisTab$MAINMODE))
+ActivityAnalysisTab <- ActivityAnalysisTab[order(ActivityAnalysisTab$Var1, -ActivityAnalysisTab$Freq),]
+```
+
+Other puprose, Recreational and Social are three categories which 
+fv
