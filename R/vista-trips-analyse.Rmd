@@ -215,4 +215,14 @@ pie(Wkepub$Freq, labels = paste0(round(100*Wkepub$Freq/sum(Wkepub$Freq),2),Wkepu
 ```
 
 
+```{r}
+par(mfrow = c(1,2))
+priv <- subset(StopsFiltered[(StopsFiltered$MAINMODE == "Vehicle Driver"| StopsFiltered$MAINMODE == "Vehicle Passenger"| StopsFiltered$MAINMODE== "Walking"),])
+g <- ggplot(priv, aes(priv$MAINMODE))
+g + geom_bar(aes(fill = priv$TRAVDOW))
+
+pub <- subset(StopsFiltered[(StopsFiltered$MAINMODE != "Vehicle Driver"& StopsFiltered$MAINMODE != "Vehicle Passenger" & StopsFiltered$MAINMODE!= "Walking"),])
+g <- ggplot(pub, aes(pub$MAINMODE))
+g + geom_bar(aes(fill = pub$TRAVDOW))
+```
 
