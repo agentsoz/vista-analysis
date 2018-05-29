@@ -21,6 +21,10 @@ knitr::opts_chunk$set(echo = TRUE)
 Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
 Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
 table(Trips$STOPS)
+Stops$Isweekend <- ifelse(Stops$TRAVDOW == "Sunday" | Stops$TRAVDOW == "Saturday", "Weekend", "Weekday")
+Trips$Isweekend <- ifelse(Trips$TRAVDOW == "Sunday" | Trips$TRAVDOW == "Saturday", "Weekend", "Weekday")
+
+
 ```
 
 Analysing trips separately for now
@@ -36,14 +40,17 @@ threeStopTrip$Speed = (threeStopTrip$Dist1/threeStopTrip$Time1)*60
 
 ```{r}
 library(ggplot2)
-Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Mode1, oneStopTrip$Speed, colour=oneStopTrip$TRAVDOW))+geom_point(position="jitter")+geom_boxplot(alpha=0, colour="black")
+library(ggthemes)
+
+
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Mode1, oneStopTrip$Speed, colour=oneStopTrip$Isweekend))+geom_point(position="jitter")+geom_boxplot(alpha=0, colour="black")
 Scatterplot
 ```
 
 
 ```{r}
 library(ggplot2)
-Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$TRAVDOW, oneStopTrip$Speed, colour=oneStopTrip$TRAVDOW))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Isweekend, oneStopTrip$Speed , colour=oneStopTrip$Isweekend))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode_Group)+geom_boxplot(alpha=0, colour="black")
 Scatterplot
 ```
 We see that day that does not matter much as the plot is very similar
@@ -129,7 +136,6 @@ ActivityAnalysisDay <- as.data.frame(table(StopsFiltered$DESTPURP1,StopsFiltered
 ActivityAnalysisDay <- ActivityAnalysisDay[order(ActivityAnalysisDay$Var1,ActivityAnalysisDay$Var2,ActivityAnalysisDay$Var3),]
 ActivityAnalysisDay <- subset(ActivityAnalysisDay[ActivityAnalysisDay$Freq>90,])
 table(StopsFiltered$MAINMODE)
-StopsFiltered$Isweekend <- ifelse(StopsFiltered$TRAVDOW == "Sunday" | StopsFiltered$TRAVDOW == "Saturday", "Weekend", "Weekday")
 ```
 
 
@@ -216,13 +222,46 @@ pie(Wkepub$Freq, labels = paste0(round(100*Wkepub$Freq/sum(Wkepub$Freq),2),Wkepu
 
 
 ```{r}
-par(mfrow = c(1,2))
+library(cowplot)
 priv <- subset(StopsFiltered[(StopsFiltered$MAINMODE == "Vehicle Driver"| StopsFiltered$MAINMODE == "Vehicle Passenger"| StopsFiltered$MAINMODE== "Walking"),])
-g <- ggplot(priv, aes(priv$MAINMODE))
-g + geom_bar(aes(fill = priv$TRAVDOW))
+g1 <- ggplot(priv, aes(priv$MAINMODE)) + geom_bar(aes(fill = priv$TRAVDOW))
 
 pub <- subset(StopsFiltered[(StopsFiltered$MAINMODE != "Vehicle Driver"& StopsFiltered$MAINMODE != "Vehicle Passenger" & StopsFiltered$MAINMODE!= "Walking"),])
-g <- ggplot(pub, aes(pub$MAINMODE))
-g + geom_bar(aes(fill = pub$TRAVDOW))
+g2 <- ggplot(pub, aes(pub$MAINMODE)) + geom_bar(aes(fill = pub$TRAVDOW))
+g1
+g2
+# plot_grid(g1, g2, labels=c(priv$MAINMODE), ncol = 2, nrow = 1)
+
+
+```
+
+
+Subsetting based on purpose of destination 
+
+```{r}
+for (i in 1:50451){
+  j = i+1
+  if (Stops$STOPNO[j]==1){
+    Stops$LastTrip[i] = 1
+  }
+  else
+    Stops$LastTrip[i] = 0
+}
+
+Profession <- subset(Stops[(Stops$DESTPURP1 == 'Education' | Stops$DESTPURP1 == 'Personal Business' | Stops$DESTPURP1 == 'Work Related'),])
+OtherPerson <- subset(Stops[(Stops$DESTPURP1 == 'Accompany Someone'| Stops$DESTPURP1 == 'Pick-up or Drop-off Someone'),])
+NonWork <- subset(Stops[(Stops$DESTPURP1 == 'Recreational'|Stops$DESTPURP1 == 'Social' | Stops$DESTPURP1 == 'Other Purpose' | Stops$DESTPURP1 == 'Buy Something'| Stops$DESTPURP1 == 'Pick-up or Deliver Something'),])
+BackHome <- subset(Stops[Stops$DESTPURP1 == "Go Home",])
+LeaveHome <- subset(Stops[Stops$ORIGPURP1 == "At Home",])
+
+
+```
+
+Analysing Leaving and returning homes
+
+```{r}
+FirstTrip <- subset(Stops, Stops$STOPNO == 1)
+LastTrip <- subset(Stops, Stops$LastTrip == 1)
+
 ```
 

@@ -28,6 +28,11 @@ table(Trips$STOPS)
 ## 119324   1451   5610   1164    892    188     45      7      3
 ```
 
+```r
+Stops$Isweekend <- ifelse(Stops$TRAVDOW == "Sunday" | Stops$TRAVDOW == "Saturday", "Weekend", "Weekday")
+Trips$Isweekend <- ifelse(Trips$TRAVDOW == "Sunday" | Trips$TRAVDOW == "Saturday", "Weekend", "Weekday")
+```
+
 Analysing trips separately for now
 
 
@@ -43,7 +48,10 @@ threeStopTrip$Speed = (threeStopTrip$Dist1/threeStopTrip$Time1)*60
 
 ```r
 library(ggplot2)
-Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Mode1, oneStopTrip$Speed, colour=oneStopTrip$TRAVDOW))+geom_point(position="jitter")+geom_boxplot(alpha=0, colour="black")
+library(ggthemes)
+
+
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Mode1, oneStopTrip$Speed, colour=oneStopTrip$Isweekend))+geom_point(position="jitter")+geom_boxplot(alpha=0, colour="black")
 Scatterplot
 ```
 
@@ -61,7 +69,7 @@ Scatterplot
 
 ```r
 library(ggplot2)
-Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$TRAVDOW, oneStopTrip$Speed, colour=oneStopTrip$TRAVDOW))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode1)+geom_boxplot(alpha=0, colour="black")
+Scatterplot<-ggplot(oneStopTrip, aes(oneStopTrip$Isweekend, oneStopTrip$Speed , colour=oneStopTrip$Isweekend))+geom_point(position="jitter")+facet_grid(~oneStopTrip$Mode_Group)+geom_boxplot(alpha=0, colour="black")
 Scatterplot
 ```
 
@@ -240,10 +248,6 @@ table(StopsFiltered$MAINMODE)
 ##             68151             31246             36131
 ```
 
-```r
-StopsFiltered$Isweekend <- ifelse(StopsFiltered$TRAVDOW == "Sunday" | StopsFiltered$TRAVDOW == "Saturday", "Weekend", "Weekday")
-```
-
 
 
 
@@ -416,19 +420,77 @@ pie(Wkepub$Freq, labels = paste0(round(100*Wkepub$Freq/sum(Wkepub$Freq),2),Wkepu
 
 
 ```r
-par(mfrow = c(1,2))
+library(cowplot)
+```
+
+```
+## Warning: package 'cowplot' was built under R version 3.4.3
+```
+
+```
+## 
+## Attaching package: 'cowplot'
+```
+
+```
+## The following object is masked from 'package:ggthemes':
+## 
+##     theme_map
+```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     ggsave
+```
+
+```r
 priv <- subset(StopsFiltered[(StopsFiltered$MAINMODE == "Vehicle Driver"| StopsFiltered$MAINMODE == "Vehicle Passenger"| StopsFiltered$MAINMODE== "Walking"),])
-g <- ggplot(priv, aes(priv$MAINMODE))
-g + geom_bar(aes(fill = priv$TRAVDOW))
+g1 <- ggplot(priv, aes(priv$MAINMODE)) + geom_bar(aes(fill = priv$TRAVDOW))
+
+pub <- subset(StopsFiltered[(StopsFiltered$MAINMODE != "Vehicle Driver"& StopsFiltered$MAINMODE != "Vehicle Passenger" & StopsFiltered$MAINMODE!= "Walking"),])
+g2 <- ggplot(pub, aes(pub$MAINMODE)) + geom_bar(aes(fill = pub$TRAVDOW))
+g1
 ```
 
 ![](vista-trips-analyse_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ```r
-pub <- subset(StopsFiltered[(StopsFiltered$MAINMODE != "Vehicle Driver"& StopsFiltered$MAINMODE != "Vehicle Passenger" & StopsFiltered$MAINMODE!= "Walking"),])
-g <- ggplot(pub, aes(pub$MAINMODE))
-g + geom_bar(aes(fill = pub$TRAVDOW))
+g2
 ```
 
 ![](vista-trips-analyse_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
+
+```r
+# plot_grid(g1, g2, labels=c(priv$MAINMODE), ncol = 2, nrow = 1)
+```
+
+
+Subsetting based on purpose of destination 
+
+
+```r
+for (i in 1:50451){
+  j = i+1
+  if (Stops$STOPNO[j]==1){
+    Stops$LastTrip[i] = 1
+  }
+  else
+    Stops$LastTrip[i] = 0
+}
+
+Profession <- subset(Stops[(Stops$DESTPURP1 == 'Education' | Stops$DESTPURP1 == 'Personal Business' | Stops$DESTPURP1 == 'Work Related'),])
+OtherPerson <- subset(Stops[(Stops$DESTPURP1 == 'Accompany Someone'| Stops$DESTPURP1 == 'Pick-up or Drop-off Someone'),])
+NonWork <- subset(Stops[(Stops$DESTPURP1 == 'Recreational'|Stops$DESTPURP1 == 'Social' | Stops$DESTPURP1 == 'Other Purpose' | Stops$DESTPURP1 == 'Buy Something'| Stops$DESTPURP1 == 'Pick-up or Deliver Something'),])
+BackHome <- subset(Stops[Stops$DESTPURP1 == "Go Home",])
+LeaveHome <- subset(Stops[Stops$ORIGPURP1 == "At Home",])
+```
+
+Analysing Leaving and returning homes
+
+
+```r
+FirstTrip <- subset(Stops, Stops$STOPNO == 1)
+LastTrip <- subset(Stops, Stops$LastTrip == 1)
+```
 
