@@ -221,7 +221,7 @@ pie(Wkepub$Freq, labels = paste0(round(100*Wkepub$Freq/sum(Wkepub$Freq),2),Wkepu
 ```
 
 
-```{r}
+```{r Mode Per Day}
 library(cowplot)
 priv <- subset(StopsFiltered[(StopsFiltered$MAINMODE == "Vehicle Driver"| StopsFiltered$MAINMODE == "Vehicle Passenger"| StopsFiltered$MAINMODE== "Walking"),])
 g1 <- ggplot(priv, aes(priv$MAINMODE)) + geom_bar(aes(fill = priv$TRAVDOW))
@@ -238,7 +238,7 @@ g2
 
 Subsetting based on purpose of destination 
 
-```{r}
+```{r destination purposes}
 for (i in 1:50451){
   j = i+1
   if (Stops$STOPNO[j]==1){
