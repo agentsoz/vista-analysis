@@ -149,6 +149,7 @@ table (oneStopTrip$ORIGPLACE1)
 nightwork <- subset(oneStopTrip, oneStopTrip$ORIGPLACE1 == "Workplace")
 ```
 
+There's something wrong
 
 ```r
 nightperson <- Person[Person$PERSID %in% nightwork$PERSID, ]
@@ -165,8 +166,8 @@ c) Activities
 
 
 ```r
-StopsFiltered <- Stops[, -c(6,7,9,12,14,15,17,16,18,21,23,25,27:50,61)]
-StopsFiltered <- StopsFiltered[, -c(48:57,29,42:44)]
+StopsFiltered <- Stops[, -c(6,7,9,15,17,16,18,25,27:50,61)]
+StopsFiltered <- StopsFiltered[, -c(52:61,33,43:48)]
 table(StopsFiltered$DESTPURP1)
 ```
 
@@ -205,7 +206,7 @@ StopsFiltered$DURATION <- as.numeric(as.character(StopsFiltered$DURATION))
 ```
 
 ```r
-ActivityAnalysis <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+ActivityAnalysis <- StopsFiltered[, c(6,7,13, 15, 27, 28, 32)]
 ActivityAnalysis <- aggregate(. ~ ActivityAnalysis$DESTPURP1 + ActivityAnalysis$TRAVMONTH + ActivityAnalysis$TRAVDOW + ActivityAnalysis$MAINMODE, data = ActivityAnalysis, FUN = mean, na.rm = TRUE)
 ActivityAnalysis <- ActivityAnalysis[, -c(5,6,7,9)]
 ActivityAnalysis <- ActivityAnalysis[order(ActivityAnalysis$`ActivityAnalysis$TRAVMONTH`, ActivityAnalysis$`ActivityAnalysis$TRAVDOW`, ActivityAnalysis$`ActivityAnalysis$MAINMODE`),]
@@ -213,9 +214,9 @@ ActivityAnalysis <- ActivityAnalysis[order(ActivityAnalysis$`ActivityAnalysis$TR
 
 
 ```r
-ActivityAnalysisTab <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
-ActivityAnalysisTab <- as.data.frame(table(ActivityAnalysisTab$DESTPURP1, ActivityAnalysisTab$MAINMODE))
-ActivityAnalysisTab <- ActivityAnalysisTab[order(ActivityAnalysisTab$Var1, -ActivityAnalysisTab$Freq),]
+# ActivityAnalysisTab <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+# ActivityAnalysisTab <- as.data.frame(table(ActivityAnalysisTab$DESTPURP1, ActivityAnalysisTab$MAINMODE))
+# ActivityAnalysisTab <- ActivityAnalysisTab[order(ActivityAnalysisTab$Var1, -ActivityAnalysisTab$Freq),]
 ```
 
 Other puprose, Recreational and Social are three categories which 
@@ -453,13 +454,13 @@ g2 <- ggplot(pub, aes(pub$MAINMODE)) + geom_bar(aes(fill = pub$TRAVDOW))
 g1
 ```
 
-![](vista-trips-analyse_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](vista-trips-analyse_files/figure-html/Mode Per Day-1.png)<!-- -->
 
 ```r
 g2
 ```
 
-![](vista-trips-analyse_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
+![](vista-trips-analyse_files/figure-html/Mode Per Day-2.png)<!-- -->
 
 ```r
 # plot_grid(g1, g2, labels=c(priv$MAINMODE), ncol = 2, nrow = 1)
@@ -470,19 +471,10 @@ Subsetting based on purpose of destination
 
 
 ```r
-for (i in 1:50451){
-  j = i+1
-  if (Stops$STOPNO[j]==1){
-    Stops$LastTrip[i] = 1
-  }
-  else
-    Stops$LastTrip[i] = 0
-}
-
 Profession <- subset(Stops[(Stops$DESTPURP1 == 'Education' | Stops$DESTPURP1 == 'Personal Business' | Stops$DESTPURP1 == 'Work Related'),])
 OtherPerson <- subset(Stops[(Stops$DESTPURP1 == 'Accompany Someone'| Stops$DESTPURP1 == 'Pick-up or Drop-off Someone'),])
 NonWork <- subset(Stops[(Stops$DESTPURP1 == 'Recreational'|Stops$DESTPURP1 == 'Social' | Stops$DESTPURP1 == 'Other Purpose' | Stops$DESTPURP1 == 'Buy Something'| Stops$DESTPURP1 == 'Pick-up or Deliver Something'),])
-BackHome <- subset(Stops[Stops$DESTPURP1 == "Go Home",])
+BackHome <- subset(StopsFiltered, StopsFiltered$DESTPURP1 == "Go Home") 
 LeaveHome <- subset(Stops[Stops$ORIGPURP1 == "At Home",])
 ```
 
@@ -490,7 +482,217 @@ Analysing Leaving and returning homes
 
 
 ```r
-FirstTrip <- subset(Stops, Stops$STOPNO == 1)
-LastTrip <- subset(Stops, Stops$LastTrip == 1)
+FirstTripHome <- subset(StopsFiltered, StopsFiltered$STOPNO == 1&StopsFiltered$ORIGPURP1 == "At Home")
+LastTripHome <- subset(BackHome, BackHome$MORESTOPS == "No")
+FirstTripNotHome <- subset(StopsFiltered, StopsFiltered$STOPNO == 1&StopsFiltered$ORIGPURP1 != "At Home")
+NightWork <- subset(FirstTripNotHome, FirstTripNotHome$ORIGPURP1==""&FirstTripNotHome$Isweekend == "Weekday")
 ```
+
+
+```r
+#First Trip
+table(FirstTripHome$STARTHOUR)
+```
+
+```
+## 
+##               1              10              11              12 
+##               0            3635            2638            1407 
+##              13              14              15              16 
+##            1109             835             640             556 
+##              17              18              19               2 
+##             378             302             129               0 
+##              20              21              22              23 
+##              59              22              11               0 
+##              24              25              26              27 
+##               0               0               0               0 
+##              28               3               4               5 
+##               0               0             218             999 
+##               6               7               8               9 
+##            2664            5468            9523            3988 
+## Missing/Refused 
+##               0
+```
+
+```r
+FirstTripHome$STARTHOUR <- as.numeric(as.character(FirstTripHome$STARTHOUR))
+ggplot(FirstTripHome, aes(x=FirstTripHome$AGEGROUP,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/First and last trips-1.png)<!-- -->
+
+```r
+ggplot(FirstTripHome, aes(x=FirstTripHome$MAINMODE,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/First and last trips-2.png)<!-- -->
+
+```r
+prop.table(table(FirstTripHome$MAINMODE))
+```
+
+```
+## 
+##           Bicycle        Motorcycle             Other        Public Bus 
+##      1.920130e-02      2.371244e-03      2.284491e-03      0.000000e+00 
+##        School Bus              Taxi             Train              Tram 
+##      4.915994e-04      2.139903e-03      5.783523e-05      2.891761e-05 
+##    Vehicle Driver Vehicle Passenger           Walking 
+##      5.225702e-01      2.659842e-01      1.848703e-01
+```
+
+```r
+prop.table(table(Stops$MAINMODE))
+```
+
+```
+## 
+##           Bicycle        Motorcycle             Other        Public Bus 
+##       0.014883298       0.001950594       0.002678727       0.015531270 
+##        School Bus              Taxi             Train              Tram 
+##       0.004108271       0.002718807       0.038069981       0.014716295 
+##    Vehicle Driver Vehicle Passenger           Walking 
+##       0.455256583       0.208726903       0.241359270
+```
+
+```r
+ggplot(FirstTripHome, aes(x=FirstTripHome$MAINMODE,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/First and last trips-3.png)<!-- -->
+The mainmode used here isn't characteristic of the actual mode being used. This is because a majority of the trips have more than one mode. So we need to find the main mode.
+
+
+FIRST TRIP
+
+```r
+MergeTrips <- Trips[, c(1,31)]
+MergeTrips <- MergeTrips[MergeTrips$TRIPID %in% FirstTripHome$TRIPID, ]
+FirstTripHome <- cbind(MergeTrips,FirstTripHome)
+FirstTripHome <- FirstTripHome[, -c(1)]
+ggplot(FirstTripHome, aes(x=FirstTripHome$LINKMODE ,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+BY AGE
+
+```r
+ggplot(FirstTripHome, aes(x=FirstTripHome$LINKMODE ,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+
+
+
+
+Last trip
+
+```r
+#Last Trip
+table(LastTripHome$STARTHOUR)
+```
+
+```
+## 
+##               1              10              11              12 
+##              57             861            1430            1601 
+##              13              14              15              16 
+##            1514            1924            5577            4431 
+##              17              18              19               2 
+##            5365            3665            2264              34 
+##              20              21              22              23 
+##            1836            1497            1124             610 
+##              24              25              26              27 
+##              61              23              17               9 
+##              28               3               4               5 
+##               2              11               5              16 
+##               6               7               8               9 
+##              57             113             246             405 
+## Missing/Refused 
+##               0
+```
+
+```r
+LastTripHome$STARTHOUR <- as.numeric(as.character(LastTripHome$STARTHOUR))
+MergeTrips <- Trips[, c(1,31)]
+MergeTrips <- MergeTrips[MergeTrips$TRIPID %in% LastTripHome$TRIPID, ]
+LastTripHome <- cbind(MergeTrips,LastTripHome)
+ggplot(LastTripHome, aes(x=LastTripHome$AGEGROUP,y=LastTripHome$ARRTIME, fill = LastTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+```r
+ggplot(LastTripHome, aes(x=LastTripHome$MAINMODE,y=LastTripHome$ARRTIME, fill = LastTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
+
+
+
+
+```r
+SubstantialTrip <- subset(Stops, (Stops$ARRTIME-Stops$STARTIME>15))
+prop.table(table(Stops$MAINMODE))
+```
+
+```
+## 
+##           Bicycle        Motorcycle             Other        Public Bus 
+##       0.014883298       0.001950594       0.002678727       0.015531270 
+##        School Bus              Taxi             Train              Tram 
+##       0.004108271       0.002718807       0.038069981       0.014716295 
+##    Vehicle Driver Vehicle Passenger           Walking 
+##       0.455256583       0.208726903       0.241359270
+```
+
+```r
+prop.table(table(SubstantialTrip$MAINMODE))
+```
+
+```
+## 
+##           Bicycle        Motorcycle             Other        Public Bus 
+##       0.020209160       0.003117467       0.003534337       0.016584199 
+##        School Bus              Taxi             Train              Tram 
+##       0.008210538       0.004114331       0.072952350       0.014971091 
+##    Vehicle Driver Vehicle Passenger           Walking 
+##       0.529353126       0.201130988       0.125822413
+```
+
+
+
+
+```r
+bycity <- as.data.frame(table(FirstTripHome$DESTLGA))
+bycity <- subset(bycity, bycity$Freq > 500)
+citywise <- FirstTripHome[FirstTripHome$DESTLGA %in% bycity$Var1,]
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTIME,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+```r
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTHOUR,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
+
+
+```r
+bycity <- as.data.frame(table(LastTripHome$DESTLGA))
+bycity <- subset(bycity, bycity$Freq > 500)
+citywise <- LastTripHome[LastTripHome$DESTLGA %in% bycity$Var1,]
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTIME,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+```r
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTHOUR,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-trips-analyse_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
 

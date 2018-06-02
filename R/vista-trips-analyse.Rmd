@@ -84,6 +84,7 @@ nightwork <- subset(oneStopTrip, oneStopTrip$ORIGPLACE1 == "Workplace")
 
 ```
 
+There's something wrong
 ```{r}
 nightperson <- Person[Person$PERSID %in% nightwork$PERSID, ]
 nightnonwork <- subset(nightperson, nightperson$ANYWORK == "No")
@@ -98,12 +99,12 @@ nightactivities_nonwork <- Trips[Trips$PERSID %in% nightnonwork$PERSID,]
 c) Activities
 
 ```{r}
-StopsFiltered <- Stops[, -c(6,7,9,12,14,15,17,16,18,21,23,25,27:50,61)]
-StopsFiltered <- StopsFiltered[, -c(48:57,29,42:44)]
+StopsFiltered <- Stops[, -c(6,7,9,15,17,16,18,25,27:50,61)]
+StopsFiltered <- StopsFiltered[, -c(52:61,33,43:48)]
 table(StopsFiltered$DESTPURP1)
 StopsFiltered$AVESPEED <- as.numeric(as.character(StopsFiltered$AVESPEED))
 StopsFiltered$DURATION <- as.numeric(as.character(StopsFiltered$DURATION))
-ActivityAnalysis <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+ActivityAnalysis <- StopsFiltered[, c(6,7,13, 15, 27, 28, 32)]
 ActivityAnalysis <- aggregate(. ~ ActivityAnalysis$DESTPURP1 + ActivityAnalysis$TRAVMONTH + ActivityAnalysis$TRAVDOW + ActivityAnalysis$MAINMODE, data = ActivityAnalysis, FUN = mean, na.rm = TRUE)
 ActivityAnalysis <- ActivityAnalysis[, -c(5,6,7,9)]
 ActivityAnalysis <- ActivityAnalysis[order(ActivityAnalysis$`ActivityAnalysis$TRAVMONTH`, ActivityAnalysis$`ActivityAnalysis$TRAVDOW`, ActivityAnalysis$`ActivityAnalysis$MAINMODE`),]
@@ -114,9 +115,9 @@ ActivityAnalysis <- ActivityAnalysis[order(ActivityAnalysis$`ActivityAnalysis$TR
 ```
 
 ```{r}
-ActivityAnalysisTab <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
-ActivityAnalysisTab <- as.data.frame(table(ActivityAnalysisTab$DESTPURP1, ActivityAnalysisTab$MAINMODE))
-ActivityAnalysisTab <- ActivityAnalysisTab[order(ActivityAnalysisTab$Var1, -ActivityAnalysisTab$Freq),]
+# ActivityAnalysisTab <- StopsFiltered[, c(6,7,12, 23, 24, 28)]
+# ActivityAnalysisTab <- as.data.frame(table(ActivityAnalysisTab$DESTPURP1, ActivityAnalysisTab$MAINMODE))
+# ActivityAnalysisTab <- ActivityAnalysisTab[order(ActivityAnalysisTab$Var1, -ActivityAnalysisTab$Freq),]
 ```
 
 Other puprose, Recreational and Social are three categories which 
@@ -239,19 +240,12 @@ g2
 Subsetting based on purpose of destination 
 
 ```{r destination purposes}
-for (i in 1:50451){
-  j = i+1
-  if (Stops$STOPNO[j]==1){
-    Stops$LastTrip[i] = 1
-  }
-  else
-    Stops$LastTrip[i] = 0
-}
+
 
 Profession <- subset(Stops[(Stops$DESTPURP1 == 'Education' | Stops$DESTPURP1 == 'Personal Business' | Stops$DESTPURP1 == 'Work Related'),])
 OtherPerson <- subset(Stops[(Stops$DESTPURP1 == 'Accompany Someone'| Stops$DESTPURP1 == 'Pick-up or Drop-off Someone'),])
 NonWork <- subset(Stops[(Stops$DESTPURP1 == 'Recreational'|Stops$DESTPURP1 == 'Social' | Stops$DESTPURP1 == 'Other Purpose' | Stops$DESTPURP1 == 'Buy Something'| Stops$DESTPURP1 == 'Pick-up or Deliver Something'),])
-BackHome <- subset(Stops[Stops$DESTPURP1 == "Go Home",])
+BackHome <- subset(StopsFiltered, StopsFiltered$DESTPURP1 == "Go Home") 
 LeaveHome <- subset(Stops[Stops$ORIGPURP1 == "At Home",])
 
 
@@ -259,9 +253,86 @@ LeaveHome <- subset(Stops[Stops$ORIGPURP1 == "At Home",])
 
 Analysing Leaving and returning homes
 
-```{r}
-FirstTrip <- subset(Stops, Stops$STOPNO == 1)
-LastTrip <- subset(Stops, Stops$LastTrip == 1)
+```{r leaving reaching home}
+FirstTripHome <- subset(StopsFiltered, StopsFiltered$STOPNO == 1&StopsFiltered$ORIGPURP1 == "At Home")
+LastTripHome <- subset(BackHome, BackHome$MORESTOPS == "No")
+FirstTripNotHome <- subset(StopsFiltered, StopsFiltered$STOPNO == 1&StopsFiltered$ORIGPURP1 != "At Home")
+NightWork <- subset(FirstTripNotHome, FirstTripNotHome$ORIGPURP1==""&FirstTripNotHome$Isweekend == "Weekday")
+```
 
+```{r First and last trips, fig.width=8, fig.height=10}
+#First Trip
+table(FirstTripHome$STARTHOUR)
+FirstTripHome$STARTHOUR <- as.numeric(as.character(FirstTripHome$STARTHOUR))
+ggplot(FirstTripHome, aes(x=FirstTripHome$AGEGROUP,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(FirstTripHome, aes(x=FirstTripHome$MAINMODE,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+prop.table(table(FirstTripHome$MAINMODE))
+prop.table(table(Stops$MAINMODE))
+ggplot(FirstTripHome, aes(x=FirstTripHome$MAINMODE,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+```
+The mainmode used here isn't characteristic of the actual mode being used. This is because a majority of the trips have more than one mode. So we need to find the main mode.
+
+
+FIRST TRIP
+```{r, fig.width=8, fig.height=10}
+MergeTrips <- Trips[, c(1,31)]
+MergeTrips <- MergeTrips[MergeTrips$TRIPID %in% FirstTripHome$TRIPID, ]
+FirstTripHome <- cbind(MergeTrips,FirstTripHome)
+FirstTripHome <- FirstTripHome[, -c(1)]
+ggplot(FirstTripHome, aes(x=FirstTripHome$LINKMODE ,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+BY AGE
+```{r}
+ggplot(FirstTripHome, aes(x=FirstTripHome$LINKMODE ,y=FirstTripHome$STARTIME, fill = FirstTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+
+
+
+Last trip
+```{r, fig.width=8, fig.height=10}
+#Last Trip
+table(LastTripHome$STARTHOUR)
+LastTripHome$STARTHOUR <- as.numeric(as.character(LastTripHome$STARTHOUR))
+MergeTrips <- Trips[, c(1,31)]
+MergeTrips <- MergeTrips[MergeTrips$TRIPID %in% LastTripHome$TRIPID, ]
+LastTripHome <- cbind(MergeTrips,LastTripHome)
+ggplot(LastTripHome, aes(x=LastTripHome$AGEGROUP,y=LastTripHome$ARRTIME, fill = LastTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(LastTripHome, aes(x=LastTripHome$MAINMODE,y=LastTripHome$ARRTIME, fill = LastTripHome$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+
+```{r, fig.width=8, fig.height=10}
+SubstantialTrip <- subset(Stops, (Stops$ARRTIME-Stops$STARTIME>15))
+prop.table(table(Stops$MAINMODE))
+prop.table(table(SubstantialTrip$MAINMODE))
+
+
+
+
+```
+
+
+
+```{r, fig.width=8, fig.height=10}
+bycity <- as.data.frame(table(FirstTripHome$DESTLGA))
+bycity <- subset(bycity, bycity$Freq > 500)
+citywise <- FirstTripHome[FirstTripHome$DESTLGA %in% bycity$Var1,]
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTIME,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTHOUR,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r, fig.width=8, fig.height=10}
+bycity <- as.data.frame(table(LastTripHome$DESTLGA))
+bycity <- subset(bycity, bycity$Freq > 500)
+citywise <- LastTripHome[LastTripHome$DESTLGA %in% bycity$Var1,]
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTIME,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(citywise, aes(x=citywise$DESTLGA,y=citywise$STARTHOUR,fill = citywise$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
