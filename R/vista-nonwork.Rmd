@@ -1,0 +1,42 @@
+---
+title: "NonWork"
+author: "Maitreya Wagh"
+date: "6/3/2018"
+output:
+  html_document:
+    keep_md: yes
+---
+
+```{r}
+Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
+Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
+Peraon <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/P_VISTA12_16_SA1_V1.csv")
+```
+
+
+```{r}
+library(ggplot2)
+table(Stops$DESTPURP1)
+NonProf <- subset(Stops, Stops$DESTPURP1 == "Other Purpose" | Stops$DESTPURP1 == "Personal Business" | Stops$DESTPURP1 == "Pick-up or Deliver Something" | Stops$DESTPURP1 == "Recreational" | Stops$DESTPURP1 == "Social" | Stops$DESTPURP1 == "Buy Something")
+NonProf <- NonProf[!table(NonProf$DESTPURP2)[NonProf$DESTPURP2]<2,]
+NonProf$DESTPURP2 <- as.factor(as.character(NonProf$DESTPURP2))
+NonProf <- NonProf[, c(10,52,53,59,60,64,68,70,23)]
+table(NonProf$DESTPURP2)
+NonProfMaj <- NonProf[!table(NonProf$DESTPURP2)[NonProf$DESTPURP2]<1000,]
+NonProfMin <- NonProf[!table(NonProf$DESTPURP2)[NonProf$DESTPURP2]>1000,]
+
+```
+
+
+
+
+
+```{r, fig.width=15, fig.height=10}
+ggplot(NonProfMin, aes(x=NonProfMin$DESTPURP2, fill = NonProfMin$SEX,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProfMaj, aes(x=NonProfMaj$DESTPURP2, fill = NonProfMaj$SEX,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProfMaj, aes(x=NonProfMaj$DESTPURP2, fill = NonProfMaj$TRAVDOW,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProfMin, aes(x=NonProfMin$DESTPURP2, fill = NonProfMin$TRAVDOW,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProfMaj, aes(x=NonProfMaj$DESTPURP2, fill = NonProfMaj$MAINMODE,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProfMin, aes(x=NonProfMin$DESTPURP2, fill = NonProfMin$MAINMODE,)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
