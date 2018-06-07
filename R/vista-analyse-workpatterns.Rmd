@@ -1,0 +1,77 @@
+---
+title: "NonWork"
+author: "Maitreya Wagh"
+date: "6/3/2018"
+output:
+  html_document:
+    keep_md: yes
+---
+
+```{r}
+library(ggplot2)
+Person <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/P_VISTA12_16_SA1_V1.csv")
+Work <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/JTW_VISTA12_16_SA1_V1.csv")
+Person <- Person[,c(1,8,9,10,11,16,17,18,19,25,27,24,23)]
+
+
+```
+
+```{r}
+Person <- Person[Person$PERSID %in% Work$PERSID, ]
+SingWrkPerson <- subset(as.data.frame(table(Work$PERSID)), as.data.frame(table(Work$PERSID))$Freq == 1)
+SingWrk <- Work[Work$PERSID %in% SingWrkPerson$Var1,]
+SingWrkPerson <- Person[Person$PERSID %in% SingWrkPerson$Var1,]
+SingWrk <- cbind(SingWrk,SingWrkPerson)
+disp <- SingWrk[, c(1,4,7,9,10,11,12,14,16,17,19,20,21,22,23,32,41,77,79,80,83,108:119)]
+```
+
+```{r}
+Person <- Person[Person$PERSID %in% Work$PERSID, ]
+MultWrkPerson <- subset(as.data.frame(table(Work$PERSID)), as.data.frame(table(Work$PERSID))$Freq > 1)
+MultWrk <- Work[Work$PERSID %in% MultWrkPerson$Var1,]
+MultWrkPerson <- Person[Person$PERSID %in% MultWrkPerson$Var1,]
+```
+Lot of random data here. Some babies and children are said to go their own wordplace, but are not in the work force. Let us only talk about people in the workforce now. 
+```{r}
+SingWrk <- (SingWrk[SingWrk$ANYWORK != "No"|SingWrk$ANZSCO1!="Not in Work Force",])
+table(SingWrk$PURP1)
+SingWrk$TtW[SingWrk$PURP1 == "Work Related"]<- "Direct"
+SingWrk$TtW[SingWrk$PURP1 != "Work Related"]<- "Indirect"
+```
+
+```{r, fig.width=15, fig.height=10}
+ggplot(SingWrk, aes(x=SingWrk$TRAVDOW, fill = SingWrk$SEX)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x=SingWrk$TRAVDOW, fill = SingWrk$TtW)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+SingWrk$STARTHOUR <- as.factor(SingWrk$STARTHOUR)
+ggplot(SingWrk, aes(x=SingWrk$TRAVDOW, fill = SingWrk$STARTHOUR)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+table(SingWrk$STARTHOUR)
+table(SingWrk$SEX, SingWrk$TtW)
+
+ggplot(SingWrk, aes(x=SingWrk$STARTHOUR, fill = SingWrk$SEX)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x=SingWrk$STARTHOUR, fill = SingWrk$TtW)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(SingWrk, aes(x=SingWrk$JTWMODE, fill = SingWrk$TtW)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$SEX)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$STARTHOUR)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+table(SingWrk$ANZSCO1, SingWrk$AGEGROUP)
+
+
+```
+
+```{r, fig.width=15, fig.height=10}
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$STARTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$STARTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$STARTIME, fill = SingWrk$TtW )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$STARTIME, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+Do same for Depature time, and duration
+
+Public/Private division. Find distributions.
+
+Relationship/TravelPeriod, Type of Work also factors. 
