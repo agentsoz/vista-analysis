@@ -58,6 +58,8 @@ table(SingWrk$PURP1)
 ```r
 SingWrk$TtW[SingWrk$PURP1 == "Work Related"]<- "Direct"
 SingWrk$TtW[SingWrk$PURP1 != "Work Related"]<- "Indirect"
+pub <- subset(SingWrk[(SingWrk$JTWMODE != "Vehicle Driver"& SingWrk$JTWMODE != "Vehicle Passenger" & SingWrk$JTWMODE!= "Walking"),])
+priv <- subset(SingWrk[(SingWrk$JTWMODE == "Vehicle Driver"|SingWrk$JTWMODE == "Vehicle Passenger" | SingWrk$JTWMODE== "Walking"),])
 ```
 
 
@@ -134,16 +136,34 @@ ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$STARTHOUR)) + geom_bar(pos
 ![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-8.png)<!-- -->
 
 ```r
-ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(pub, aes(x=pub$ANZSCO1, fill = pub$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-9.png)<!-- -->
 
 ```r
-ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(pub, aes(x=pub$TRAVDOW, fill = pub$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-10.png)<!-- -->
+
+```r
+ggplot(priv, aes(x=priv$ANZSCO1, fill = priv$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-11.png)<!-- -->
+
+```r
+ggplot(priv, aes(x=priv$TRAVDOW, fill = priv$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-12.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-5-13.png)<!-- -->
 
 ```r
 table(SingWrk$ANZSCO1, SingWrk$AGEGROUP)
@@ -212,6 +232,77 @@ table(SingWrk$ANZSCO1, SingWrk$AGEGROUP)
 ##   Technicians and Trades Workers              0      0      0
 ```
 
+```r
+tab2<-table(SingWrk$ANZSCO1, SingWrk$JTWMODE)
+prop.table(tab2,1)
+```
+
+```
+##                                         
+##                                               Bicycle   Motorcycle
+##   Clerical and Administrative Workers    0.0190627482 0.0007942812
+##   Community and Personal Service Workers 0.0306603774 0.0094339623
+##   Labourers                              0.0110887097 0.0040322581
+##   Machinery Operators and Drivers        0.0107758621 0.0064655172
+##   Managers                               0.0186046512 0.0086378738
+##   Missing/Refused                        0.0277777778 0.0000000000
+##   Not in Work Force                                               
+##   Professionals                          0.0358169935 0.0044444444
+##   Sales Workers                          0.0136411333 0.0020986359
+##   Technicians and Trades Workers         0.0171919771 0.0076408787
+##                                         
+##                                                 Other   Public Bus
+##   Clerical and Administrative Workers    0.0000000000 0.0095313741
+##   Community and Personal Service Workers 0.0011792453 0.0106132075
+##   Labourers                              0.0010080645 0.0131048387
+##   Machinery Operators and Drivers        0.0000000000 0.0086206897
+##   Managers                               0.0000000000 0.0073089701
+##   Missing/Refused                        0.0000000000 0.0277777778
+##   Not in Work Force                                               
+##   Professionals                          0.0002614379 0.0117647059
+##   Sales Workers                          0.0000000000 0.0220356768
+##   Technicians and Trades Workers         0.0000000000 0.0076408787
+##                                         
+##                                                  Taxi        Train
+##   Clerical and Administrative Workers    0.0007942812 0.1945988880
+##   Community and Personal Service Workers 0.0058962264 0.1226415094
+##   Labourers                              0.0030241935 0.0675403226
+##   Machinery Operators and Drivers        0.0021551724 0.0193965517
+##   Managers                               0.0006644518 0.1249169435
+##   Missing/Refused                        0.0000000000 0.1666666667
+##   Not in Work Force                                               
+##   Professionals                          0.0013071895 0.1850980392
+##   Sales Workers                          0.0000000000 0.0786988458
+##   Technicians and Trades Workers         0.0019102197 0.0678127985
+##                                         
+##                                                  Tram Vehicle Driver
+##   Clerical and Administrative Workers    0.0270055600   0.6854646545
+##   Community and Personal Service Workers 0.0365566038   0.6863207547
+##   Labourers                              0.0120967742   0.7923387097
+##   Machinery Operators and Drivers        0.0021551724   0.9181034483
+##   Managers                               0.0265780731   0.7714285714
+##   Missing/Refused                        0.0000000000   0.7222222222
+##   Not in Work Force                                                 
+##   Professionals                          0.0279738562   0.6742483660
+##   Sales Workers                          0.0104931794   0.7869884575
+##   Technicians and Trades Workers         0.0114613181   0.8299904489
+##                                         
+##                                          Vehicle Passenger      Walking
+##   Clerical and Administrative Workers         0.0452740270 0.0174741859
+##   Community and Personal Service Workers      0.0589622642 0.0377358491
+##   Labourers                                   0.0745967742 0.0211693548
+##   Machinery Operators and Drivers             0.0301724138 0.0021551724
+##   Managers                                    0.0305647841 0.0112956811
+##   Missing/Refused                             0.0555555556 0.0000000000
+##   Not in Work Force                                                    
+##   Professionals                               0.0342483660 0.0248366013
+##   Sales Workers                               0.0598111228 0.0262329486
+##   Technicians and Trades Workers              0.0458452722 0.0105062082
+```
+
+
+df
+
 
 ```r
 ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$STARTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -241,3 +332,74 @@ Do same for Depature time, and duration
 Public/Private division. Find distributions.
 
 Relationship/TravelPeriod, Type of Work also factors. 
+
+
+
+
+```r
+SingWrk$DEPTIME <- as.integer(SingWrk$DEPTIME)
+SingWrk$DEPHOUR <- as.integer(SingWrk$DEPHOUR)
+
+
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$DEPTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPTIME, fill = SingWrk$TtW )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-3.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$DEPTIME, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-4.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$DEPHOUR, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-5.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPHOUR, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-6.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$DEPHOUR, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-7-7.png)<!-- -->
+
+
+
+
+```r
+SingWrk$workDuration <- as.integer(SingWrk$workDuration)
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$workDuration, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$workDuration, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+
+```r
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$workDuration, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+![](vista-analyse-workpatterns_files/figure-html/unnamed-chunk-8-3.png)<!-- -->

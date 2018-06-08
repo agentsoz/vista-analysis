@@ -37,6 +37,8 @@ SingWrk <- (SingWrk[SingWrk$ANYWORK != "No"|SingWrk$ANZSCO1!="Not in Work Force"
 table(SingWrk$PURP1)
 SingWrk$TtW[SingWrk$PURP1 == "Work Related"]<- "Direct"
 SingWrk$TtW[SingWrk$PURP1 != "Work Related"]<- "Indirect"
+pub <- subset(SingWrk[(SingWrk$JTWMODE != "Vehicle Driver"& SingWrk$JTWMODE != "Vehicle Passenger" & SingWrk$JTWMODE!= "Walking"),])
+priv <- subset(SingWrk[(SingWrk$JTWMODE == "Vehicle Driver"|SingWrk$JTWMODE == "Vehicle Passenger" | SingWrk$JTWMODE== "Walking"),])
 ```
 
 ```{r, fig.width=15, fig.height=10}
@@ -55,13 +57,21 @@ ggplot(SingWrk, aes(x=SingWrk$JTWMODE, fill = SingWrk$TtW)) + geom_bar(position=
 ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$SEX)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$STARTHOUR)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(pub, aes(x=pub$ANZSCO1, fill = pub$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(pub, aes(x=pub$TRAVDOW, fill = pub$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(priv, aes(x=priv$ANZSCO1, fill = priv$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(priv, aes(x=priv$TRAVDOW, fill = priv$JTWMODE)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ggplot(SingWrk, aes(x=SingWrk$ANZSCO1, fill = SingWrk$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 table(SingWrk$ANZSCO1, SingWrk$AGEGROUP)
-
+tab2<-table(SingWrk$ANZSCO1, SingWrk$JTWMODE)
+prop.table(tab2,1)
 
 ```
+
+
+df
 
 ```{r, fig.width=15, fig.height=10}
 ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$STARTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -75,3 +85,32 @@ Do same for Depature time, and duration
 Public/Private division. Find distributions.
 
 Relationship/TravelPeriod, Type of Work also factors. 
+
+
+
+```{r, fig.width=15, fig.height=10}
+
+SingWrk$DEPTIME <- as.integer(SingWrk$DEPTIME)
+SingWrk$DEPHOUR <- as.integer(SingWrk$DEPHOUR)
+
+
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$DEPTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPTIME, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPTIME, fill = SingWrk$TtW )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$DEPTIME, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$DEPHOUR, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$DEPHOUR, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$DEPHOUR, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+
+```{r, fig.width=15, fig.height=10}
+SingWrk$workDuration <- as.integer(SingWrk$workDuration)
+ggplot(SingWrk, aes(x = SingWrk$TRAVDOW, y = SingWrk$workDuration, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$AGEGROUP, y = SingWrk$workDuration, fill = SingWrk$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingWrk, aes(x = SingWrk$ANZSCO1, y = SingWrk$workDuration, fill = SingWrk$SEX )) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
