@@ -33,9 +33,11 @@ ggplot(SingEdu, aes(x=SingEdu$STARTHOUR, fill = SingEdu$AGEGROUP)) + geom_bar(po
 ggplot(SingEdu, aes(x=SingEdu$MAINACT, fill = SingEdu$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
-ggplot(SingEdu, aes(x = SingEdu$AGEGROUP, y = SingEdu$STARTIME, fill = SingEdu$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 ```
-```{r}
+
+```{r, fig.width=15, fig.height=10}
+
 ggplot(SingEdu, aes(x=SingEdu$DEPHOUR, fill = SingEdu$SEX)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ggplot(SingEdu, aes(x=SingEdu$DEPHOUR, fill = SingEdu$MAINACT)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ggplot(SingEdu, aes(x=SingEdu$DEPHOUR, fill = SingEdu$AGEGROUP)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -49,7 +51,14 @@ ggplot(SingEdu, aes(x=SingEdu$DIST_GRP, fill = SingEdu$AGEGROUP)) + geom_bar(pos
 ```
 
 
-```{r}
-
+```{r, fig.width=15, fig.height=10}
+ggplot(SingEdu, aes(x = SingEdu$AGEGROUP, y = SingEdu$STARTIME, fill = SingEdu$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(SingEdu, aes(x = SingEdu$AGEGROUP, y = SingEdu$STARTIME, fill = SingEdu$MAINACT)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+SingEdu$AGE <- as.factor(as.numeric(SingEdu$AGE))
+ggplot(SingEdu, aes(x = SingEdu$AGE, y = SingEdu$JTEDIST, fill = SingEdu$MAINACT)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlim(5,20) +scale_x_discrete() + ylim(0,20)
+ggplot(SingEdu, aes(x = SingEdu$AGE, y = SingEdu$JTE_TravelTime, fill = SingEdu$MAINACT)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlim(5,20) +scale_x_discrete()
+ggplot(SingEdu, aes(x = SingEdu$AGE, y = SingEdu$STARTIME, fill = SingEdu$MAINACT)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlim(5,20) +scale_x_discrete()
+ggplot(SingEdu, aes(x = SingEdu$AGE, y = SingEdu$DUR1, fill = SingEdu$MAINACT)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlim(5,20) +scale_x_discrete() + ylim(250,500)
+```
 ```
 

@@ -83,4 +83,11 @@ NonProfMaj$DURATION <- as.numeric(as.character(NonProfMaj$DURATION))
 ggplot(NonProfMaj, aes(x=NonProfMaj$DESTPURP2 ,y=NonProfMaj$DURATION, fill = NonProfMaj$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ggplot(NonProfMaj, aes(x=NonProfMaj$DESTPURP2 ,y=NonProfMaj$VISTADIST, fill = NonProfMaj$SEX)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+```{r, fig.width=15, fig.height=10}
+NonProf$Isweekend <- ifelse(NonProf$TRAVDOW == "Sunday" | NonProf$TRAVDOW == "Saturday", "Weekend", "Weekday")
+NonProf$IsweekendWt <- ifelse(NonProf$TRAVDOW == "Sunday" | NonProf$TRAVDOW == "Saturday", 0.5, 0.2)
+table(NonProf$DESTPURP2, NonProf$Isweekend)
+ggplot(NonProf, aes(x=NonProf$DESTPURP2, fill = NonProf$Isweekend)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(NonProf, aes(x=NonProf$DESTPURP2, fill = NonProf$Isweekend, weight = NonProf$IsweekendWt)) + geom_bar(position="dodge") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
 
