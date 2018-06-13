@@ -18,5 +18,24 @@ Work$ModeType[Work$JTWMODE=="Motorcycle"|Work$JTWMODE=="Other"]<-"Other"
 Work$Isweekend <- ifelse(Work$TRAVDOW == "Sunday" | Work$TRAVDOW == "Saturday", "Weekend", "Weekday")
 ActivWork <- subset(Work[Work$ModeType == "Active"&Work$Isweekend == "Weekday",])
 ggplot(Work, aes(x=Work$ModeType, fill = Work$JTWMODE, weight = Work$CW_WDJTWWGT_LGA))+geom_bar()
+ggplot(Work, aes(x=Work$ModeType, y = Work$JTWDIST, fill = Work$JTWMODE, weight = Work$CW_WDJTWWGT_LGA))+geom_col()
+```
+
+```{r}
+Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
+Mel <- subset(Trips[Trips$HOMELGA == "Boroondara (C)",])
+Mel$WhichMode[Mel$LINKMODE=="Vehicle Driver"|Mel$LINKMODE == "Vehicle Passenger"] <- "Private"
+Mel$WhichMode[Mel$LINKMODE=="Walking"] <- "Walking"
+Mel$WhichMode[Mel$LINKMODE=="Public Bus"|Mel$LINKMODE=="Tram"|Mel$LINKMODE=="Train"|Mel$LINKMODE=="Taxi"] <- "Public"
+Mel$WhichMode[Mel$LINKMODE=="Bicycle"] <- "Bicycle"
+Mel$Isweekend <- ifelse(Mel$TRAVDOW == "Sunday" | Mel$TRAVDOW == "Saturday", "Weekend", "Weekday")
+MelWkd <- subset(Mel[Mel$Isweekend=="Weekday",])
+library(questionr)
+ggplot(MelWkd, aes(x=MelWkd$WhichMode,weight = MelWkd$CW_WDTRIPWGT_LGA)) + geom_bar()
+wtd.table(MelWkd$WhichMode,weights = MelWkd$CW_WDTRIPWGT_LGA)
+```
+
+```{r}
+wtd.table(MelWkd$DESTPURP1,weights = MelWkd$RP_WDTRIPWGT_LGA)
 ```
 
