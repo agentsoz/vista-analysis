@@ -13,8 +13,8 @@ library(questionr)
 library(smbinning)
 library(varhandle)
 library(randomForest)
-PersonsSuburb <- read.csv("../../synthetic-population/data/melbourne-2016-population/melbourne/generated/SA2/Mount\ Eliza/population/persons.csv")
-HouseholsSuburb <-  read.csv("../../synthetic-population/data/melbourne-2016-population/melbourne/generated/SA2/Mount\ Eliza/population/households.csv")
+PersonsSuburb <- read.csv("../../synthetic-population/data/melbourne-2016-population/melbourne/generated/SA2/Northcote/population/persons.csv")
+HouseholsSuburb <-  read.csv("../../synthetic-population/data/melbourne-2016-population/melbourne/generated/SA2/Northcote/population/households.csv")
 PersonsSuburb$AgeGroup[PersonsSuburb$Age > 69] <- 7
 PersonsSuburb$AgeGroup[PersonsSuburb$Age < 70] <- 6
 PersonsSuburb$AgeGroup[PersonsSuburb$Age < 60] <- 5
