@@ -719,7 +719,6 @@ names(formalsetEdu)[15]<-"JTEMODE"
 ```
 
 ```{r}
-Edu$EduCat <- as.factor(Edu$EduCat)
 reg <- lm(Edu$JTEDIST~Edu$STARTIME+Edu$SEX+Edu$JTEMODE)
 summary(reg)
 ```
@@ -757,3 +756,10 @@ ggplot(formalsetEdu,aes(x=formalsetEdu$MAINACT,y=formalsetEdu$JTEDIST,fill=forma
 
 
 ```
+
+
+```{r}
+
+
+```
+

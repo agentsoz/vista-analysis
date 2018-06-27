@@ -6,7 +6,7 @@ output:
   html_document:
     keep_md: yes
 ---
-Analysing Mount eliza
+Analysing Northcote
 
 ```r
 library(ggplot2)
@@ -420,7 +420,7 @@ test_set <- formalsetWork[,c(2,3)]
 
 test_set$SEX = factor(test_set$SEX,
                        labels = c(1, 2))
-finalerr <- 100
+finalerr <- 1000
 idealtrees = 0
 for (a in 1:20){
 line_reg = randomForest(x=dataset2[-3],y=dataset2$STARTIME,ntree = 10*a,weights = Wrk$CW_ADJTWWGT_LGA)
@@ -556,9 +556,8 @@ finalset <- rbind(finalset,test_set)
 finalset <- finalset[order(finalset$AgentId),]
 formalsetWork <- formalsetWork[order(finalset$AgentId),]
 formalsetWork <- cbind(formalsetWork,finalset$JTWMODE)
-names(formalsetWork)[9]<-"workDuration"
-names(formalsetWork)[10]<-"JTWMODE"
-names(formalsetWork)[8]<-"STARTIME"
+
+names(formalsetWork)[10] <- "JTWMODE"
 ```
 
 
@@ -742,19 +741,232 @@ formalsetWork$LeaveWorkTime <- formalsetWork$ReachWorkTme+formalsetWork$workDura
 
 
 
+```r
+Edu <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/JTE_VISTA12_16_SA1_V1.csv")
+```
+
+
+Profession based on main activity and age
+``{r}
+
+```r
+Person <- Persons[Persons$PERSID %in% Edu$PERSID, ]
+SingEduPerson <- subset(as.data.frame(table(Edu$PERSID)), as.data.frame(table(Edu$PERSID))$Freq == 1)
+SingEdu <- Edu[Edu$PERSID %in% SingEduPerson$Var1,]
+SingEduPerson <- Person[Person$PERSID %in% SingEduPerson$Var1,]
+SingEdu <- SingEdu[order(SingEdu$PERSID),]
+SingEduPerson <- SingEduPerson[order(SingEduPerson$PERSID),]
+SingEdu <- cbind(SingEdu,SingEduPerson)
+Edu <- subset(SingEdu, SingEdu$MAINACT=="Primary School"|SingEdu$MAINACT=="Secondary School"|SingEdu$MAINACT=="Full-time TAFE/Uni"|SingEdu$MAINACT=="Part-time TAFE/Uni")
+Edu$AgeGroup_RW <- as.factor(Edu$AgeGroup_RW)
+Edu$MAINACT<-as.factor(as.character(Edu$MAINACT))
+formalsetEdu <- subset(PersonsSuburb,PersonsSuburb$MainAct=="Primary School"|PersonsSuburb$MainAct=="Secondary School"|PersonsSuburb$MainAct=="Full-time TAFE/Uni"|PersonsSuburb$MainAct=="Part-time TAFE/Uni")
+names(formalsetEdu)[2] <- "AGE"
+names(formalsetEdu)[3] <- "SEX"
+names(formalsetEdu)[13] <- "MAINACT"
+```
+
+Start Time
+
+```r
+formalsetEdu <- formalsetEdu[order(formalsetEdu$AgentId),]
+formalsetEdu$AgeGroup <- as.factor(formalsetEdu$AgeGroup)
+dataset2 <- Edu[,c(114,128,11)]
+dataset2$MAINACT = factor(dataset2$MAINACT,
+                       labels = c(1:4))
+
+test_set <- formalsetEdu[,c(2,13)]
+
+test_set$MAINACT = factor(test_set$MAINACT,
+                       labels = c(1:4))
+finalerr <- 1000
+idealtrees = 0
+for (a in 1:20){
+line_reg = randomForest(x=dataset2[-3],y=dataset2$STARTIME,ntree = 10*a,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$STARTIME = predict(line_reg, test_set)
+err <- sum(abs((aggregate(Edu$STARTIME~Edu$AgeGroup_RW,FUN=mean)[2]-aggregate(formalsetEdu$STARTIME~formalsetEdu$AgeGroup, FUN=mean)[2])/(aggregate(Edu$STARTIME~Edu$AgeGroup_RW,FUN=mean)[2])*100))
+if (err<finalerr){
+  finalerr=err
+  idealtrees = 10*a
+}
+}
+line_reg = randomForest(x=dataset2[-3],y=dataset2$STARTIME,ntree = idealtrees,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$STARTIME = predict(line_reg, test_set)
+
+ggplot(Edu,aes(x=Edu$MAINACT,y=Edu$STARTIME,fill=Edu$AgeGroup_RW))+geom_boxplot() +coord_cartesian(ylim=c(400,700))
+```
+
+![](vista-Northcote-formal_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+```r
+ggplot(formalsetEdu,aes(x=formalsetEdu$MAINACT,y=formalsetEdu$STARTIME,fill=formalsetEdu$AgeGroup))+geom_boxplot()
+```
+
+![](vista-Northcote-formal_files/figure-html/unnamed-chunk-18-2.png)<!-- -->
+
+Mode based on Age
+
+```r
+test_data<-subset(formalsetEdu,formalsetEdu$SEX=="Female")
+test_data <-test_data[,c(1,12)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+train_data<-subset(Edu,Edu$SEX=="Female")
+
+
+training_set <- subset(train_data,train_data$AgeGroup_RW==1)
+test_set <- subset(test_data,test_data$AgeGroup==1)
+test_set <- test_set[order(test_set$Rand),]
+EduCat<-as.data.frame(cumsum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))*100)
+EduCat$Mode <- rownames(EduCat)
+rownames(EduCat)<-c()
+EduCat$Wt <- EduCat$`cumsum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA)) * 100`
+EduCat <- EduCat[,c(-1)]
+j=1
+i=1
+for (i in 1:10){
+ while (test_set$Rand[j]<EduCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$JTEMODE[j] <- EduCat$Mode[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+a = 2
+for (a in 2:7){
+training_set <- subset(train_data,train_data$AgeGroup_RW==a)
+test_set <- subset(test_data,test_data$AgeGroup==a)
+test_set <- test_set[order(test_set$Rand),]
+EduCat<-as.data.frame(cumsum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))*100)
+EduCat$Mode <- rownames(EduCat)
+rownames(EduCat)<-c()
+EduCat$Wt <- EduCat$`cumsum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA)) * 100`
+EduCat <- EduCat[,c(-1)]
+j=1
+i=1
+for (i in 1:13){
+  while (test_set$Rand[j]<EduCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$JTEMODE[j] <- EduCat$Mode[i] 
+    j=j+1
+  }
+}
+
+test_set<-test_set[order(test_set$AgentId),]
+finalset <- rbind(finalset,test_set)
+}
+
+test_data<-subset(formalsetEdu,formalsetEdu$SEX=="Male")
+test_data <-test_data[,c(1,12)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+train_data<-subset(Persons,Persons$SEX=="Male")
 
 
 
+a = 1
+for (a in 1:7){
+training_set <- subset(Edu,Edu$AgeGroup_RW==a)
+test_set <- subset(test_data,test_data$AgeGroup==a)
+test_set <- test_set[order(test_set$Rand),]
+EduCat<-as.data.frame(cumsum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE,weights = training_set$CW_ADPERSWGT_LGA))*100)
+EduCat$Mode <- rownames(EduCat)
+rownames(EduCat)<-c()
+EduCat$Wt <- EduCat$`cumsum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA))/sum(wtd.table(training_set$JTEMODE, weights = training_set$CW_ADPERSWGT_LGA)) * 100`
+EduCat <- EduCat[,c(-1)]
+j=1
+i=1
+for (i in 1:13){
+  while (test_set$Rand[j]<EduCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$JTEMODE[j] <- EduCat$Mode[i] 
+    j=j+1
+  }
+}
+
+test_set<-test_set[order(test_set$AgentId),]
+finalset <- rbind(finalset,test_set)
+}
+
+finalset <- finalset[order(finalset$AgentId),]
+formalsetEdu <- formalsetEdu[order(finalset$AgentId),]
+formalsetEdu <- cbind(formalsetEdu,finalset$JTEMODE)
+names(formalsetEdu)[15]<-"JTEMODE"
+```
+
+
+```r
+reg <- lm(Edu$JTEDIST~Edu$STARTIME+Edu$SEX+Edu$JTEMODE)
+summary(reg)
+```
+
+```
+## 
+## Call:
+## lm(formula = Edu$JTEDIST ~ Edu$STARTIME + Edu$SEX + Edu$JTEMODE)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -16.333  -3.290  -1.013   0.834  76.893 
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                  10.074090   1.199441   8.399  < 2e-16 ***
+## Edu$STARTIME                 -0.014906   0.001958  -7.614 3.36e-14 ***
+## Edu$SEXMale                  -0.305969   0.217445  -1.407  0.15948    
+## Edu$JTEMODEMotorcycle        13.273212   4.719433   2.812  0.00494 ** 
+## Edu$JTEMODEOther              0.167631   2.014142   0.083  0.93368    
+## Edu$JTEMODEPublic Bus         5.729695   0.897252   6.386 1.92e-10 ***
+## Edu$JTEMODESchool Bus         9.697930   0.800536  12.114  < 2e-16 ***
+## Edu$JTEMODETaxi               1.273824   6.631251   0.192  0.84768    
+## Edu$JTEMODETrain             16.900351   0.783123  21.581  < 2e-16 ***
+## Edu$JTEMODETram               7.052830   1.059127   6.659 3.16e-11 ***
+## Edu$JTEMODEVehicle Driver    12.546590   0.934284  13.429  < 2e-16 ***
+## Edu$JTEMODEVehicle Passenger  2.731961   0.669335   4.082 4.57e-05 ***
+## Edu$JTEMODEWalking           -1.258539   0.708884  -1.775  0.07592 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 6.599 on 3696 degrees of freedom
+## Multiple R-squared:  0.3322,	Adjusted R-squared:  0.3301 
+## F-statistic: 153.2 on 12 and 3696 DF,  p-value: < 2.2e-16
+```
+
+Distance to work
+
+```r
+dataset2 <- Edu[,c(11,128,82,78)]
+
+dataset2$JTEMODE = factor(dataset2$JTEMODE,
+                       labels = c(1:11))
+dataset2$MAINACT = factor(dataset2$MAINACT,
+                       labels = c(1:4))
+test_set <- formalsetEdu[,c(14,13,15)]
+test_set$JTEMODE = factor(test_set$JTEMODE,
+                       labels = c(1:11))
+test_set$MAINACT = factor(test_set$MAINACT,
+                       labels = c(1:4))
+finalerr <- 1000
+idealtrees = 0
+for (a in 1:20){
+line_reg = randomForest(x=dataset2[-4],y=dataset2$JTEDIST,ntree = 10*a,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$JTEDIST = predict(line_reg, test_set)
+err <- sum(abs((aggregate(Edu$JTEDIST~Edu$JTEMODE,FUN=mean)[2]-aggregate(formalsetEdu$JTEDIST~formalsetEdu$JTEMODE, FUN=mean)[2])/(aggregate(Edu$JTEDIST~Edu$JTEMODE,FUN=mean)[2])*100))
+if (err<finalerr){
+  finalerr=err
+  idealtrees = 10*a
+}
+}
+line_reg = randomForest(x=dataset2[-4],y=dataset2$JTEDIST,ntree = idealtrees,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$JTEDIST = predict(line_reg, test_set)
+
+ggplot(Edu,aes(x=Edu$MAINACT,y=Edu$JTEDIST,fill=Edu$AgeGroup_RW))+geom_boxplot() +coord_cartesian(ylim=c(0,25))
+```
+
+![](vista-Northcote-formal_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+```r
+ggplot(formalsetEdu,aes(x=formalsetEdu$MAINACT,y=formalsetEdu$JTEDIST,fill=formalsetEdu$AgeGroup))+geom_boxplot()
+```
+
+![](vista-Northcote-formal_files/figure-html/unnamed-chunk-21-2.png)<!-- -->
 
 
 
-
-
-
-
-
-
-
-
-Whole thing for Edu
 
