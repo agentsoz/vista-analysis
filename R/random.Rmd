@@ -412,13 +412,13 @@ summary(reg)
 ```
 
 ```{r}
-dataset2 <- Edu[,c(11,83,186)]
+dataset2 <- Edu[,c(11,82,186)]
 dataset2$JTEMODE = factor(dataset2$JTEMODE,
-                       labels = c(1:10))
-test_set <- formalsetEdu[,c(8,10)]
+                       labels = c(1:11))
+test_set <- formalsetEdu[,c(14,15)]
 test_set$JTEMODE = factor(test_set$JTEMODE,
-                       labels = c(1:10))
-finalerr <- 100
+                       labels = c(1:11))
+finalerr <- 1000
 idealtrees = 0
 for (a in 1:20){
 line_reg = randomForest(x=dataset2[-3],y=dataset2$JTESPEED,ntree = 10*a,weights = Edu$CW_ADJTEWGT_LGA)
@@ -437,11 +437,9 @@ formalsetEdu$JTESPEED = predict(line_reg, test_set)
 ggplot(Edu,aes(x=Edu$AgeGroup_RW,y=Edu$STARTIME))+geom_boxplot()  + coord_cartesian(ylim=c(400,700))
 ggplot(formalsetEdu,aes(x=formalsetEdu$AgeGroup,y=formalsetEdu$STARTIME))+geom_boxplot()
 
+
 ggplot(Edu,aes(x=Edu$JTEMODE,y=Edu$JTESPEED))+geom_boxplot() + coord_cartesian(ylim=c(0,30))
 ggplot(formalsetEdu,aes(x=formalsetEdu$JTEMODE,y=formalsetEdu$JTESPEED))+geom_boxplot()
-
-ggplot(Edu,aes(x=Edu$AgeGroup_RW,y=Edu$workDuration))+geom_boxplot() + coord_cartesian(ylim=c(100,400))
-ggplot(formalsetEdu,aes(x=formalsetEdu$AgeGroup,y=formalsetEdu$workDuration))+geom_boxplot()
 
 
 ```

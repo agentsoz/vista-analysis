@@ -150,9 +150,9 @@ Wrk <- subset(SingWrk, SingWrk$MAINACT=="Full-time Work"|SingWrk$MAINACT=="Part-
 Wrk$AgeGroup_RW <- as.factor(Wrk$AgeGroup_RW)
 Wrk$MAINACT<-as.factor(as.character(Wrk$MAINACT))
 
-
 test_data<-subset(PersonsSuburb,PersonsSuburb$Gender=="Female")
 test_data<-subset(test_data,test_data$MainAct=="Casual Work"|test_data$MainAct=="Full-time Work"|test_data$MainAct=="Part-time Work")
+formalsetWork<-subset(PersonsSuburb,PersonsSuburb$MainAct=="Casual Work"|PersonsSuburb$MainAct=="Full-time Work"|PersonsSuburb$MainAct=="Part-time Work")
 test_data$MainAct <- as.factor(as.character(test_data$MainAct))
 test_data$WorkCat <- as.numeric(test_data$MainAct)
 test_data <-test_data[,c(1,2,3,12,14)]
@@ -296,10 +296,10 @@ test_set<-test_set[order(test_set$AgentId),]
 finalset <- rbind(finalset,test_set)
 }
 }
-formalsetWork <- finalset
 names(formalsetWork)[2] <- "AGE"
 names(formalsetWork)[3] <- "SEX"
-names(formalsetWork)[7] <- "ANZSCO1"
+formalsetWork$ANZSCO1 <- finalset$MainAct
+
 
 ```
 
@@ -355,7 +355,7 @@ Wrk$workDuration <- as.numeric(Wrk$workDuration)
 dataset2 <- Wrk[,c(114,131,77)]
 
 dataset2$ANZSCO1 = factor(dataset2$ANZSCO1,labels = c(1:10))
-test_set <- formalsetWork[,c(2,7)]
+test_set <- formalsetWork[,c(2,14)]
 
 test_set$ANZSCO1 = factor(test_set$ANZSCO1,
                        labels = c(1: 10))
@@ -398,7 +398,7 @@ formalsetWork$workDuration = predict(line_reg, test_set)
 Mode based on Age
 ```{r}
 test_data<-subset(formalsetWork,formalsetWork$SEX=="Female")
-test_data <-test_data[,c(1,4)]
+test_data <-test_data[,c(1,12)]
 test_data$Rand <- runif(nrow(test_data), 0, 100)
 train_data<-subset(Wrk,Wrk$SEX=="Female")
 
@@ -445,7 +445,7 @@ finalset <- rbind(finalset,test_set)
 }
 
 test_data<-subset(formalsetWork,formalsetWork$SEX=="Male")
-test_data <-test_data[,c(1,4)]
+test_data <-test_data[,c(1,12)]
 test_data$Rand <- runif(nrow(test_data), 0, 100)
 train_data<-subset(Persons,Persons$SEX=="Male")
 
@@ -478,7 +478,7 @@ finalset <- finalset[order(finalset$AgentId),]
 formalsetWork <- formalsetWork[order(finalset$AgentId),]
 formalsetWork <- cbind(formalsetWork,finalset$JTWMODE)
 
-names(formalsetWork)[10] <- "JTWMODE"
+names(formalsetWork)[17] <- "JTWMODE"
 
 
 
@@ -497,7 +497,7 @@ dataset2 <- Wrk[,c(11,83,79)]
 
 dataset2$JTWMODE = factor(dataset2$JTWMODE,
                        labels = c(1:10))
-test_set <- formalsetWork[,c(8,10)]
+test_set <- formalsetWork[,c(15,17)]
 test_set$JTWMODE = factor(test_set$JTWMODE,
                        labels = c(1:10))
 finalerr <- 1000
@@ -531,7 +531,7 @@ summary(reg)
 dataset2 <- Wrk[,c(11,83,186)]
 dataset2$JTWMODE = factor(dataset2$JTWMODE,
                        labels = c(1:10))
-test_set <- formalsetWork[,c(8,10)]
+test_set <- formalsetWork[,c(15,17)]
 test_set$JTWMODE = factor(test_set$JTWMODE,
                        labels = c(1:10))
 finalerr <- 100
@@ -574,6 +574,24 @@ formalsetWork$LeaveWorkTime <- formalsetWork$ReachWorkTme+formalsetWork$workDura
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```{r}
 Edu <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/JTE_VISTA12_16_SA1_V1.csv")
 
@@ -597,6 +615,7 @@ formalsetEdu <- subset(PersonsSuburb,PersonsSuburb$MainAct=="Primary School"|Per
 names(formalsetEdu)[2] <- "AGE"
 names(formalsetEdu)[3] <- "SEX"
 names(formalsetEdu)[13] <- "MAINACT"
+formalsetEdu$ANZSCO1 <- formalsetEdu$MAINACT
 ```
 
 Start Time
@@ -712,7 +731,7 @@ finalset <- rbind(finalset,test_set)
 finalset <- finalset[order(finalset$AgentId),]
 formalsetEdu <- formalsetEdu[order(finalset$AgentId),]
 formalsetEdu <- cbind(formalsetEdu,finalset$JTEMODE)
-names(formalsetEdu)[15]<-"JTEMODE"
+names(formalsetEdu)[16]<-"JTEMODE"
 
 
 
@@ -726,14 +745,14 @@ summary(reg)
 Distance to work
 ```{r}
 dataset2 <- Edu[,c(11,128,82,78)]
-
+dataset2 <- subset(dataset2,dataset2$JTEMODE!="Taxi")
 dataset2$JTEMODE = factor(dataset2$JTEMODE,
-                       labels = c(1:11))
+                       labels = c(1:10))
 dataset2$MAINACT = factor(dataset2$MAINACT,
                        labels = c(1:4))
-test_set <- formalsetEdu[,c(14,13,15)]
+test_set <- formalsetEdu[,c(15,13,16)]
 test_set$JTEMODE = factor(test_set$JTEMODE,
-                       labels = c(1:11))
+                       labels = c(1:10))
 test_set$MAINACT = factor(test_set$MAINACT,
                        labels = c(1:4))
 finalerr <- 1000
@@ -741,7 +760,7 @@ idealtrees = 0
 for (a in 1:20){
 line_reg = randomForest(x=dataset2[-4],y=dataset2$JTEDIST,ntree = 10*a,weights = Edu$CW_ADJTEWGT_LGA)
 formalsetEdu$JTEDIST = predict(line_reg, test_set)
-err <- sum(abs((aggregate(Edu$JTEDIST~Edu$JTEMODE,FUN=mean)[2]-aggregate(formalsetEdu$JTEDIST~formalsetEdu$JTEMODE, FUN=mean)[2])/(aggregate(Edu$JTEDIST~Edu$JTEMODE,FUN=mean)[2])*100))
+err <- sum(abs((aggregate(dataset2$JTEDIST~dataset2$JTEMODE,FUN=mean)[2]-aggregate(formalsetEdu$JTEDIST~formalsetEdu$JTEMODE, FUN=mean)[2])/(aggregate(dataset2$JTEDIST~dataset2$JTEMODE,FUN=mean)[2])*100))
 if (err<finalerr){
   finalerr=err
   idealtrees = 10*a
@@ -758,8 +777,160 @@ ggplot(formalsetEdu,aes(x=formalsetEdu$MAINACT,y=formalsetEdu$JTEDIST,fill=forma
 ```
 
 
+
+
+Average Speed
+
 ```{r}
+Edu$JTESPEED <- (Edu$JTEDIST/Edu$JTE_TravelTime)*60
+reg <- lm(Edu$JTESPEED~Edu$STARTIME+Edu$SEX+Edu$JTEMODE+Edu$AGE)
+summary(reg)
+```
+
+```{r}
+dataset2 <- Edu[,c(11,82,186)]
+dataset2 <- subset(dataset2,dataset2$JTEMODE!="Taxi")
+dataset2$JTEMODE = factor(dataset2$JTEMODE,
+                       labels = c(1:10))
+test_set <- formalsetEdu[,c(15,16)]
+test_set$JTEMODE = factor(test_set$JTEMODE,
+                       labels = c(1:10))
+finalerr <- 1000
+idealtrees = 0
+for (a in 1:20){
+line_reg = randomForest(x=dataset2[-3],y=dataset2$JTESPEED,ntree = 10*a,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$JTESPEED = predict(line_reg, test_set)
+err <- sum(abs((aggregate(dataset2$JTESPEED~dataset2$JTEMODE,FUN=mean)[2]-aggregate(formalsetEdu$JTESPEED~formalsetEdu$JTEMODE, FUN=mean)[2])/(aggregate(dataset2$JTESPEED~dataset2$JTEMODE,FUN=mean)[2])*100))
+if (err<finalerr){
+  finalerr=err
+  idealtrees = 10*a
+}
+}
+line_reg = randomForest(x=dataset2[-3],y=dataset2$JTESPEED,ntree = idealtrees,weights = Edu$CW_ADJTEWGT_LGA)
+formalsetEdu$JTESPEED = predict(line_reg, test_set)
+```
+
+```{r, fig.width=15, fig.height=10}
+ggplot(Edu,aes(x=Edu$AgeGroup_RW,y=Edu$STARTIME))+geom_boxplot()  + coord_cartesian(ylim=c(400,700))
+ggplot(formalsetEdu,aes(x=formalsetEdu$AgeGroup,y=formalsetEdu$STARTIME))+geom_boxplot()
+
+
+ggplot(Edu,aes(x=Edu$JTEMODE,y=Edu$JTESPEED))+geom_boxplot() + coord_cartesian(ylim=c(0,30))
+ggplot(formalsetEdu,aes(x=formalsetEdu$JTEMODE,y=formalsetEdu$JTESPEED))+geom_boxplot()
 
 
 ```
+
+
+
+Time taken to reach work in hours
+```{r}
+formalsetEdu$JTETIME <- formalsetEdu$JTEDIST/formalsetEdu$JTESPEED
+formalsetEdu$ReachEduTme <- formalsetEdu$STARTIME + formalsetEdu$JTETIME
+
+```
+
+
+
+
+```{r}
+Trips <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/T_VISTA12_16_SA1_V1.csv")
+Stops <- read.csv("../data/vista/2018-05-23-vista-2013-16/VISTA_2012_16_v1_SA1_CSV/S_VISTA12_16_SA1_V1.csv")
+```
+
+
+
+
+```{r}
+JTE <- subset(Stops, Stops$DESTPURP1=="Education")
+JFE <- subset(Stops, Stops$ORIGPURP1=="Education")
+JTEperson <- subset(as.data.frame(table(JTE$PERSID)), as.data.frame(table(JTE$PERSID))$Freq == 1)
+JFEperson <- subset(as.data.frame(table(JFE$PERSID)), as.data.frame(table(JFE$PERSID))$Freq == 1)
+JTE <- JTE[JTE$PERSID %in% JTEperson$Var1,]
+JFE <- JFE[JFE$PERSID %in% JFEperson$Var1,]
+JTE$PERSID <- as.factor(as.character(JTE$PERSID))
+JFE$PERSID <- as.factor(as.character(JFE$PERSID))
+total <- merge(JTE,JFE,by.x = "PERSID", by.y = "PERSID")
+total$eduDuration <- total$STARTIME.y-total$ARRTIME.x
+EduPersons <- Persons[Persons$PERSID %in% total$PERSID,]
+total <- merge(total,EduPersons,by.x = "PERSID", by.y = "PERSID")
+
+
+```
+
+```{r}
+dataset2total <- subset(total,total$MAINACT == "Primary School"|total$MAINACT=="Secondary School"|total$MAINACT == "Part-time TAFE/Uni"|total$MAINACT == "Full-time TAFE/Uni")
+dataset2total$MAINACT <- as.factor(as.character(dataset2total$MAINACT))
+dataset2 <- dataset2total[,c(195,209,188)]
+test_set <- formalsetEdu[,c(2,13)]
+dataset2$MAINACT = factor(dataset2$MAINACT,labels = c(1:4))
+test_set$MAINACT = factor(test_set$MAINACT,labels = c(1:4))
+
+finalerr <- 1000
+idealtrees = 0
+for (a in 1:20){
+line_reg = randomForest(x=dataset2[-3],y=dataset2total$eduDuration,ntree = 10*a,weights = dataset2total$CW_ADSTOPWGT_LGA.x)
+formalsetEdu$eduDuration = predict(line_reg, test_set)
+err <- sum(abs((aggregate(dataset2total$eduDuration~dataset2total$MAINACT,FUN=mean)[2]-aggregate(formalsetEdu$eduDuration~formalsetEdu$MAINACT, FUN=mean)[2])/(aggregate(dataset2total$eduDuration~dataset2total$MAINACT,FUN=mean)[2])*100))
+if (err<finalerr){
+  finalerr=err
+  idealtrees = 10*a
+}
+}
+line_reg = randomForest(x=dataset2[-3],y=dataset2total$eduDuration,ntree = idealtrees,weights = dataset2total$CW_ADJTEWGT_LGA)
+formalsetEdu$eduDuration = predict(line_reg, test_set)
+
+formalsetEdu$LeaveEduTime <- formalsetEdu$ReachEduTme+formalsetEdu$eduDuration
+formalsetEdu <- formalsetEdu[c(1:15,21,16:20,22)]
+```
+
+
+
+```{r}
+formalset <- formalsetWork
+names(formalset)[16]<-"MainActDuration"
+names(formalset)[17]<-"JTMMODE" 
+names(formalset)[18]<-"JTMDIST"
+names(formalset)[19]<-"JTMSPEED"
+names(formalset)[20]<-"JTMTIME"
+names(formalset)[21]<-"ReachMainAct"
+names(formalset)[22]<-"LeaveMainAct"
+temp <- formalsetEdu
+names(temp)[16]<-"MainActDuration"
+names(temp)[17]<-"JTMMODE" 
+names(temp)[18]<-"JTMDIST"
+names(temp)[19]<-"JTMSPEED"
+names(temp)[20]<-"JTMTIME"
+names(temp)[21]<-"ReachMainAct"
+names(temp)[22]<-"LeaveMainAct"
+names(temp)[13]<-"MainAct"
+formalset <- rbind(formalset,temp)
+```
+
+
+
+
+We need maps. Trips of Northcote are too less to get any sort of data. But if we used maps, we could only count SA3 or SA4 which involved Northcote
+
+```{r}
+Trips$Speed <- Trips$CUMDIST/Trips$TRAVTIME*60
+dataset2 <- Trips[,c(8,31,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE,
+                       labels = c(1:11))
+test_set <- formalset[,c(15,17)]
+test_set$LINKMODE = factor(test_set$JTMMODE,
+                       labels = c(1:11))
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+dataset2$Speed[dataset2$Speed=="NaN"]<-0
+line_reg = randomForest(x=dataset2[-3],y=dataset2$Speed,ntree = 100,weights = Trips$CW_ADJTEWGT_LGA)
+formalset$JFMSpeed = predict(line_reg, test_set)
+
+
+formalset$JFMTime <- formalset$JTMDIST/formalset$JFMSpeed
+formalset$ArrTime <- formalset$LeaveMainAct + formalset$JFMTime
+```
+
 
