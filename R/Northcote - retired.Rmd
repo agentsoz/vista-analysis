@@ -1,0 +1,1212 @@
+---
+title: "NonWork"
+author: "Maitreya Wagh"
+date: "6/3/2018"
+output:
+  html_document:
+    keep_md: yes
+---
+
+
+```{r}
+retired <- subset(Persons,Persons$MAINACT=="Retired")
+tripRetired <- Trips[Trips$PERSID %in% retired$PERSID,]
+Stops <- Stops[Stops$PERSID %in% retired$PERSID,]
+formalsetRetired <- subset(PersonsSuburb, PersonsSuburb$MainAct=="Retired")
+formalsetRetired$ANSZCO1 <- formalsetRetired$MainAct
+```
+
+```{r, fig.width=15, fig.height=10}
+RetMainAct <- subset(tripRetired, tripRetired$DESTPURP1 == "Buy Something"|tripRetired$DESTPURP1=="Personal Business"|tripRetired$DESTPURP1=="Recreational"|tripRetired$DESTPURP1=="Social")
+RetMainAct$LINKMODE <- as.factor(as.character(RetMainAct$LINKMODE))
+persRetired <- Persons[Persons$PERSID %in% RetMainAct$PERSID,]
+table(tripRetired$DESTPURP1)
+RetMainAct <- RetMainAct[order(RetMainAct$PERSID),]
+persRetired <- persRetired[order(persRetired$PERSID),]
+b=1
+for (a in 1:nrow(persRetired)){
+  while (as.character(RetMainAct$PERSID[b])==as.character(persRetired$PERSID[a])&&!is.na(RetMainAct$PERSID[b])){
+    RetMainAct$AGE[b] <- persRetired$AGE[a]
+    RetMainAct$SEX[b] <- persRetired$SEX[a]
+    RetMainAct$AgeGroup[b] <- persRetired$AgeGroup_RW[a]
+
+    b=b+1
+  }
+}
+ggplot(RetMainAct, aes(x=RetMainAct$DESTPURP2,y=as.numeric(RetMainAct$AGE)))+geom_boxplot() 
+RetMainAct <- subset(RetMainAct, RetMainAct$DESTPURP2=="Ate or drank"|RetMainAct$DESTPURP2=="Bought something"|RetMainAct$DESTPURP2=="Medical/Dental purposes"|RetMainAct$DESTPURP2=="Personal business (eg banking)"|RetMainAct$DESTPURP2=="Personal Business (NEC)"|RetMainAct$DESTPURP2=="Recreational (NEC)"|RetMainAct$DESTPURP2=="Religious activity"|RetMainAct$DESTPURP2=="Social (NEC)"|RetMainAct$DESTPURP2=="Visited someone"|RetMainAct$DESTPURP2=="Volunteer/Community activity"|RetMainAct$DESTPURP2=="Walked the dog"|RetMainAct$DESTPURP2=="Participated in sport"|RetMainAct$DESTPURP2=="Watched concert, movies etc")
+RetMainAct$DESTPURP2 <- as.factor(as.character(RetMainAct$DESTPURP2))
+RetMainAct$AgeGroup <- as.factor(RetMainAct$AgeGroup)
+
+
+```
+anszco
+```{r}
+test_set <-formalsetRetired[,c(1,12)]
+test_set$Rand <- runif(nrow(test_set), 0, 100)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(RetMainAct$DESTPURP2,weights=RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2,weights = RetMainAct$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:13){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$MainAct[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+
+test_set <- test_set[order(test_set$AgentId),]
+formalsetRetired$ANSZCO1 <- test_set$MainAct
+
+
+
+
+```
+mode
+```{r}
+
+test_data <-formalsetRetired[,c(1,14)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+test_data$cat <- as.integer(as.factor(test_data$ANSZCO1))
+training_data <- RetMainAct
+training_data$cat <- as.integer(as.factor(training_data$DESTPURP2))
+
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==1)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==1)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+
+for (a in 2:13){
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==a)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==a)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- rbind(finalset,test_set)
+}
+finalset <- finalset[order(finalset$AgentId),]
+formalsetRetired$LINKMODE <- finalset$LINKMODE
+```
+startime
+```{r}
+formalsetRetired <- formalsetRetired[order(formalsetRetired$AgentId),]
+formalsetRetired$AgeGroup <- as.factor(formalsetRetired$AgeGroup)
+RetMainAct$STARTIME <- as.numeric(RetMainAct$STARTIME)
+dataset2 <- RetMainAct[,c(91,92,23,8)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:13))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetRetired[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:13))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$STARTIME,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetRetired$STARTIME = predict(line_reg, test_set)
+```
+
+duration
+```{r}
+
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,92,23,35)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:13))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetRetired[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:13))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$DURATION,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetRetired$DURATION = predict(line_reg, test_set)
+```
+
+
+distance
+```{r}
+formalsetRetired <- formalsetRetired[order(formalsetRetired$AgentId),]
+formalsetRetired$AgeGroup <- as.factor(formalsetRetired$AgeGroup)
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,31,23,27)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:13))
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:10))
+test_set <- formalsetRetired[,c(2,14,15)]
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:13))
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$CUMDIST,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetRetired$CUMDIST = predict(line_reg, test_set)
+```
+
+
+```{r}
+RetMainAct$SPEED <- RetMainAct$CUMDIST/RetMainAct$TRAVTIME * 60
+```
+
+Speed
+```{r}
+formalsetRetired <- formalsetRetired[order(formalsetRetired$AgentId),]
+dataset2 <- RetMainAct[,c(31,8,94)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:10))
+test_set <- formalsetRetired[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:10))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetRetired$JTMSpeed = predict(line_reg, test_set)
+
+```
+
+
+```{r}
+formalsetRetired$JTMTime <- formalsetRetired$CUMDIST/formalsetRetired$JTMSpeed * 60
+formalsetRetired$ReachMainTime <- formalsetRetired$STARTIME + formalsetRetired$JTMTime
+formalsetRetired$LeaveMainTime <- formalsetRetired$ReachMainTime+formalsetRetired$DURATION
+```
+
+Just using Start time and Vehicle
+```{r}
+RetHome <- subset(tripRetired, tripRetired$DESTPURP1 == "At or Go Home")
+RetHome$SPEED <- RetHome$CUMDIST/RetHome$TRAVTIME * 60
+
+formalsetRetired <- formalsetRetired[order(formalsetRetired$AgentId),]
+dataset2 <- RetHome[,c(31,8,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:10))
+test_set <- formalsetRetired[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:10))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetRetired$JFMSpeed = predict(line_reg, test_set)
+```
+
+
+```{r}
+formalsetRetired$JFMTime <- formalsetRetired$CUMDIST/formalsetRetired$JFMSpeed * 60
+formalsetRetired$ReachHome <- formalsetRetired$LeaveMainTime + formalsetRetired$JFMTime
+```
+
+
+HOMEKEEPERS
+
+
+```{r}
+HomeKeeper <- subset(Persons,Persons$MAINACT=="Keeping House")
+tripHomeKeeper <- Trips[Trips$PERSID %in% HomeKeeper$PERSID,]
+Stops <- Stops[Stops$PERSID %in% HomeKeeper$PERSID,]
+formalsetHomeKeeper <- subset(PersonsSuburb, PersonsSuburb$MainAct=="Keeping House")
+formalsetHomeKeeper$ANSZCO1 <- formalsetHomeKeeper$MainAct
+```
+
+```{r, fig.width=15, fig.height=10}
+RetMainAct <- subset(tripHomeKeeper, tripHomeKeeper$DESTPURP1 == "Buy Something"|tripHomeKeeper$DESTPURP1=="Personal Business"|tripHomeKeeper$DESTPURP1=="Recreational"|tripHomeKeeper$DESTPURP1=="Social")
+RetMainAct$LINKMODE <- as.factor(as.character(RetMainAct$LINKMODE))
+persHomeKeeper <- Persons[Persons$PERSID %in% RetMainAct$PERSID,]
+table(tripHomeKeeper$DESTPURP1)
+RetMainAct <- RetMainAct[order(RetMainAct$PERSID),]
+persHomeKeeper <- persHomeKeeper[order(persHomeKeeper$PERSID),]
+b=1
+for (a in 1:nrow(persHomeKeeper)){
+  while (as.character(RetMainAct$PERSID[b])==as.character(persHomeKeeper$PERSID[a])&&!is.na(RetMainAct$PERSID[b])){
+    RetMainAct$AGE[b] <- persHomeKeeper$AGE[a]
+    RetMainAct$SEX[b] <- persHomeKeeper$SEX[a]
+    RetMainAct$AgeGroup[b] <- persHomeKeeper$AgeGroup_RW[a]
+    b=b+1
+  }
+}
+ggplot(RetMainAct, aes(x=RetMainAct$DESTPURP2,y=as.numeric(RetMainAct$AGE)))+geom_boxplot() 
+RetMainAct <- subset(RetMainAct, RetMainAct$DESTPURP2=="Ate or drank"|RetMainAct$DESTPURP2=="Bought something"|RetMainAct$DESTPURP2=="Medical/Dental purposes"|RetMainAct$DESTPURP2=="Personal business (eg banking)"|RetMainAct$DESTPURP2=="Personal Business (NEC)"|RetMainAct$DESTPURP2=="Recreational (NEC)"|RetMainAct$DESTPURP2=="Religious activity"|RetMainAct$DESTPURP2=="Social (NEC)"|RetMainAct$DESTPURP2=="Visited someone"|RetMainAct$DESTPURP2=="Walked the dog")
+RetMainAct$DESTPURP2 <- as.factor(as.character(RetMainAct$DESTPURP2))
+RetMainAct$AgeGroup <- as.factor(RetMainAct$AgeGroup)
+
+
+```
+anszco
+```{r}
+test_set <-formalsetHomeKeeper[,c(1,12)]
+test_set$Rand <- runif(nrow(test_set), 0, 100)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(RetMainAct$DESTPURP2,weights=RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2,weights = RetMainAct$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:13){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$MainAct[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+
+test_set <- test_set[order(test_set$AgentId),]
+formalsetHomeKeeper$ANSZCO1 <- test_set$MainAct
+
+
+
+
+```
+mode
+```{r}
+
+test_data <-formalsetHomeKeeper[,c(1,14)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+test_data$cat <- as.integer(as.factor(test_data$ANSZCO1))
+training_data <- RetMainAct
+training_data$cat <- as.integer(as.factor(training_data$DESTPURP2))
+
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==1)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==1)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+
+for (a in 2:13){
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==a)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==a)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- rbind(finalset,test_set)
+}
+finalset <- finalset[order(finalset$AgentId),]
+formalsetHomeKeeper$LINKMODE <- finalset$LINKMODE
+```
+startime
+```{r}
+formalsetHomeKeeper <- formalsetHomeKeeper[order(formalsetHomeKeeper$AgentId),]
+formalsetHomeKeeper$AgeGroup <- as.factor(formalsetHomeKeeper$AgeGroup)
+RetMainAct$STARTIME <- as.numeric(RetMainAct$STARTIME)
+dataset2 <- RetMainAct[,c(91,92,23,8)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetHomeKeeper[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$STARTIME,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetHomeKeeper$STARTIME = predict(line_reg, test_set)
+```
+
+duration
+```{r}
+
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,92,23,35)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetHomeKeeper[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$DURATION,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetHomeKeeper$DURATION = predict(line_reg, test_set)
+```
+
+
+distance
+```{r}
+formalsetHomeKeeper <- formalsetHomeKeeper[order(formalsetHomeKeeper$AgentId),]
+formalsetHomeKeeper$AgeGroup <- as.factor(formalsetHomeKeeper$AgeGroup)
+RetMainAct <- subset(RetMainAct, RetMainAct$LINKMODE != "Motorcycle")
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,31,23,27)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:8))
+test_set <- formalsetHomeKeeper[,c(2,14,15)]
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:8))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$CUMDIST,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetHomeKeeper$CUMDIST = predict(line_reg, test_set)
+```
+
+
+```{r}
+RetMainAct$SPEED <- RetMainAct$CUMDIST/RetMainAct$TRAVTIME * 60
+```
+
+Speed
+```{r}
+formalsetHomeKeeper <- formalsetHomeKeeper[order(formalsetHomeKeeper$AgentId),]
+dataset2 <- RetMainAct[,c(31,8,94)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:8))
+test_set <- formalsetHomeKeeper[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:8))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetHomeKeeper$JTMSpeed = predict(line_reg, test_set)
+
+```
+
+
+```{r}
+formalsetHomeKeeper$JTMTime <- formalsetHomeKeeper$CUMDIST/formalsetHomeKeeper$JTMSpeed * 60
+formalsetHomeKeeper$ReachMainTime <- formalsetHomeKeeper$STARTIME + formalsetHomeKeeper$JTMTime
+formalsetHomeKeeper$LeaveMainTime <- formalsetHomeKeeper$ReachMainTime+formalsetHomeKeeper$DURATION
+```
+
+Just using Start time and Vehicle
+```{r}
+RetHome <- subset(tripHomeKeeper, tripHomeKeeper$DESTPURP1 == "At or Go Home")
+RetHome <- subset(RetHome, RetHome$LINKMODE!="Bicycle")
+RetHome$SPEED <- RetHome$CUMDIST/RetHome$TRAVTIME * 60
+
+formalsetHomeKeeper <- formalsetHomeKeeper[order(formalsetHomeKeeper$AgentId),]
+dataset2 <- RetHome[,c(31,8,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:8))
+test_set <- formalsetHomeKeeper[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:8))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetHomeKeeper$JFMSpeed = predict(line_reg, test_set)
+```
+
+
+```{r}
+formalsetHomeKeeper$JFMTime <- formalsetHomeKeeper$CUMDIST/formalsetHomeKeeper$JFMSpeed * 60
+formalsetHomeKeeper$ReachHome <- formalsetHomeKeeper$LeaveMainTime + formalsetHomeKeeper$JFMTime
+```
+
+
+
+
+
+
+Unemployed
+
+```{r}
+Unemployed <- subset(Persons,Persons$MAINACT=="Unemployed")
+tripUnemployed <- Trips[Trips$PERSID %in% Unemployed$PERSID,]
+Stops <- Stops[Stops$PERSID %in% Unemployed$PERSID,]
+formalsetUnemployed <- subset(PersonsSuburb, PersonsSuburb$MainAct=="Unemployed")
+formalsetUnemployed$ANSZCO1 <- formalsetUnemployed$MainAct
+```
+
+
+```{r, fig.width=15, fig.height=10}
+RetMainAct <- subset(tripUnemployed, tripUnemployed$DESTPURP1 == "Buy Something"|tripUnemployed$DESTPURP1=="Personal Business"|tripUnemployed$DESTPURP1=="Recreational"|tripUnemployed$DESTPURP1=="Social")
+RetMainAct$LINKMODE <- as.factor(as.character(RetMainAct$LINKMODE))
+persUnemployed <- Persons[Persons$PERSID %in% RetMainAct$PERSID,]
+table(tripUnemployed$DESTPURP1)
+RetMainAct <- RetMainAct[order(RetMainAct$PERSID),]
+persUnemployed <- persUnemployed[order(persUnemployed$PERSID),]
+b=1
+for (a in 1:nrow(persUnemployed)){
+  while (as.character(RetMainAct$PERSID[b])==as.character(persUnemployed$PERSID[a])&&!is.na(RetMainAct$PERSID[b])){
+    RetMainAct$AGE[b] <- persUnemployed$AGE[a]
+    RetMainAct$SEX[b] <- persUnemployed$SEX[a]
+    RetMainAct$AgeGroup[b] <- persUnemployed$AgeGroup_RW[a]
+    b=b+1
+  }
+}
+ggplot(RetMainAct, aes(x=RetMainAct$DESTPURP2,y=as.numeric(RetMainAct$AGE)))+geom_boxplot() 
+RetMainAct <- subset(RetMainAct, RetMainAct$DESTPURP2=="Ate or drank"|RetMainAct$DESTPURP2=="Bought something"|RetMainAct$DESTPURP2=="Medical/Dental purposes"|RetMainAct$DESTPURP2=="Personal business (eg banking)"|RetMainAct$DESTPURP2=="Personal Business (NEC)"|RetMainAct$DESTPURP2=="Other recreational (eg. exercise)"|RetMainAct$DESTPURP2=="Religious activity"|RetMainAct$DESTPURP2=="Social (NEC)"|RetMainAct$DESTPURP2=="Visited someone"|RetMainAct$DESTPURP2=="Walked the dog")
+RetMainAct$DESTPURP2 <- as.factor(as.character(RetMainAct$DESTPURP2))
+RetMainAct <- subset(RetMainAct, RetMainAct$LINKMODE!="Bicycle")
+RetMainAct$AgeGroup <- as.factor(RetMainAct$AgeGroup)
+
+
+```
+anszco
+```{r}
+test_set <-formalsetUnemployed[,c(1,12)]
+test_set$Rand <- runif(nrow(test_set), 0, 100)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(RetMainAct$DESTPURP2,weights=RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2,weights = RetMainAct$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:13){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$MainAct[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+
+test_set <- test_set[order(test_set$AgentId),]
+formalsetUnemployed$ANSZCO1 <- test_set$MainAct
+
+
+
+
+```
+mode
+```{r}
+
+test_data <-formalsetUnemployed[,c(1,14)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+test_data$cat <- as.integer(as.factor(test_data$ANSZCO1))
+training_data <- RetMainAct
+training_data$cat <- as.integer(as.factor(training_data$DESTPURP2))
+
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==1)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==1)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+
+for (a in 2:13){
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==a)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==a)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- rbind(finalset,test_set)
+}
+finalset <- finalset[order(finalset$AgentId),]
+formalsetUnemployed$LINKMODE <- finalset$LINKMODE
+```
+startime
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+formalsetUnemployed$AgeGroup <- as.factor(formalsetUnemployed$AgeGroup)
+RetMainAct$STARTIME <- as.numeric(RetMainAct$STARTIME)
+dataset2 <- RetMainAct[,c(91,92,23,8)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetUnemployed[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$STARTIME,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$STARTIME = predict(line_reg, test_set)
+```
+
+duration
+```{r}
+
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,92,23,35)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetUnemployed[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$DURATION,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$DURATION = predict(line_reg, test_set)
+```
+
+
+distance
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+formalsetUnemployed$AgeGroup <- as.factor(formalsetUnemployed$AgeGroup)
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,31,23,27)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(2,14,15)]
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$CUMDIST,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$CUMDIST = predict(line_reg, test_set)
+```
+
+
+```{r}
+RetMainAct$SPEED <- RetMainAct$CUMDIST/RetMainAct$TRAVTIME * 60
+```
+
+Speed
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+dataset2 <- RetMainAct[,c(31,8,94)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$JTMSpeed = predict(line_reg, test_set)
+
+```
+
+
+```{r}
+formalsetUnemployed$JTMTime <- formalsetUnemployed$CUMDIST/formalsetUnemployed$JTMSpeed * 60
+formalsetUnemployed$ReachMainTime <- formalsetUnemployed$STARTIME + formalsetUnemployed$JTMTime
+formalsetUnemployed$LeaveMainTime <- formalsetUnemployed$ReachMainTime+formalsetUnemployed$DURATION
+```
+
+Just using Start time and Vehicle
+```{r}
+RetHome <- subset(tripUnemployed, tripUnemployed$DESTPURP1 == "At or Go Home")
+RetHome <- subset(RetHome, RetHome$LINKMODE!="Bicycle")
+RetHome$SPEED <- RetHome$CUMDIST/RetHome$TRAVTIME * 60
+
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+dataset2 <- RetHome[,c(31,8,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$JFMSpeed = predict(line_reg, test_set)
+```
+
+
+```{r}
+formalsetUnemployed$JFMTime <- formalsetUnemployed$CUMDIST/formalsetUnemployed$JFMSpeed * 60
+formalsetUnemployed$ReachHome <- formalsetUnemployed$LeaveMainTime + formalsetUnemployed$JFMTime
+```
+
+
+
+
+
+Unemployed
+
+```{r}
+Unemployed <- subset(Persons,Persons$MAINACT=="Unemployed")
+tripUnemployed <- Trips[Trips$PERSID %in% Unemployed$PERSID,]
+Stops <- Stops[Stops$PERSID %in% Unemployed$PERSID,]
+formalsetUnemployed <- subset(PersonsSuburb, PersonsSuburb$MainAct=="Unemployed")
+formalsetUnemployed$ANSZCO1 <- formalsetUnemployed$MainAct
+```
+
+
+```{r, fig.width=15, fig.height=10}
+RetMainAct <- subset(tripUnemployed, tripUnemployed$DESTPURP1 == "Buy Something"|tripUnemployed$DESTPURP1=="Personal Business"|tripUnemployed$DESTPURP1=="Recreational"|tripUnemployed$DESTPURP1=="Social")
+RetMainAct$LINKMODE <- as.factor(as.character(RetMainAct$LINKMODE))
+persUnemployed <- Persons[Persons$PERSID %in% RetMainAct$PERSID,]
+table(tripUnemployed$DESTPURP1)
+RetMainAct <- RetMainAct[order(RetMainAct$PERSID),]
+persUnemployed <- persUnemployed[order(persUnemployed$PERSID),]
+b=1
+for (a in 1:nrow(persUnemployed)){
+  while (as.character(RetMainAct$PERSID[b])==as.character(persUnemployed$PERSID[a])&&!is.na(RetMainAct$PERSID[b])){
+    RetMainAct$AGE[b] <- persUnemployed$AGE[a]
+    RetMainAct$SEX[b] <- persUnemployed$SEX[a]
+    RetMainAct$AgeGroup[b] <- persUnemployed$AgeGroup_RW[a]
+    b=b+1
+  }
+}
+ggplot(RetMainAct, aes(x=RetMainAct$DESTPURP2,y=as.numeric(RetMainAct$AGE)))+geom_boxplot() 
+RetMainAct <- subset(RetMainAct, RetMainAct$DESTPURP2=="Ate or drank"|RetMainAct$DESTPURP2=="Bought something"|RetMainAct$DESTPURP2=="Medical/Dental purposes"|RetMainAct$DESTPURP2=="Personal business (eg banking)"|RetMainAct$DESTPURP2=="Personal Business (NEC)"|RetMainAct$DESTPURP2=="Other recreational (eg. exercise)"|RetMainAct$DESTPURP2=="Religious activity"|RetMainAct$DESTPURP2=="Social (NEC)"|RetMainAct$DESTPURP2=="Visited someone"|RetMainAct$DESTPURP2=="Walked the dog")
+RetMainAct$DESTPURP2 <- as.factor(as.character(RetMainAct$DESTPURP2))
+RetMainAct <- subset(RetMainAct, RetMainAct$LINKMODE!="Bicycle")
+RetMainAct$AgeGroup <- as.factor(RetMainAct$AgeGroup)
+
+
+```
+anszco
+```{r}
+test_set <-formalsetUnemployed[,c(1,12)]
+test_set$Rand <- runif(nrow(test_set), 0, 100)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(RetMainAct$DESTPURP2,weights=RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2,weights = RetMainAct$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:13){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$MainAct[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+
+test_set <- test_set[order(test_set$AgentId),]
+formalsetUnemployed$ANSZCO1 <- test_set$MainAct
+
+
+
+
+```
+mode
+```{r}
+
+test_data <-formalsetUnemployed[,c(1,14)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+test_data$cat <- as.integer(as.factor(test_data$ANSZCO1))
+training_data <- RetMainAct
+training_data$cat <- as.integer(as.factor(training_data$DESTPURP2))
+
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==1)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==1)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+
+for (a in 2:13){
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==a)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==a)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- rbind(finalset,test_set)
+}
+finalset <- finalset[order(finalset$AgentId),]
+formalsetUnemployed$LINKMODE <- finalset$LINKMODE
+```
+startime
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+formalsetUnemployed$AgeGroup <- as.factor(formalsetUnemployed$AgeGroup)
+RetMainAct$STARTIME <- as.numeric(RetMainAct$STARTIME)
+dataset2 <- RetMainAct[,c(91,92,23,8)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetUnemployed[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$STARTIME,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$STARTIME = predict(line_reg, test_set)
+```
+
+duration
+```{r}
+
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,92,23,35)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetUnemployed[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$DURATION,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$DURATION = predict(line_reg, test_set)
+```
+
+
+distance
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+formalsetUnemployed$AgeGroup <- as.factor(formalsetUnemployed$AgeGroup)
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,31,23,27)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:10))
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(2,14,15)]
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:10))
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$CUMDIST,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$CUMDIST = predict(line_reg, test_set)
+```
+
+
+```{r}
+RetMainAct$SPEED <- RetMainAct$CUMDIST/RetMainAct$TRAVTIME * 60
+```
+
+Speed
+```{r}
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+dataset2 <- RetMainAct[,c(31,8,94)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$JTMSpeed = predict(line_reg, test_set)
+
+```
+
+
+```{r}
+formalsetUnemployed$JTMTime <- formalsetUnemployed$CUMDIST/formalsetUnemployed$JTMSpeed * 60
+formalsetUnemployed$ReachMainTime <- formalsetUnemployed$STARTIME + formalsetUnemployed$JTMTime
+formalsetUnemployed$LeaveMainTime <- formalsetUnemployed$ReachMainTime+formalsetUnemployed$DURATION
+```
+
+Just using Start time and Vehicle
+```{r}
+RetHome <- subset(tripUnemployed, tripUnemployed$DESTPURP1 == "At or Go Home")
+RetHome <- subset(RetHome, RetHome$LINKMODE!="Bicycle")
+RetHome$SPEED <- RetHome$CUMDIST/RetHome$TRAVTIME * 60
+
+formalsetUnemployed <- formalsetUnemployed[order(formalsetUnemployed$AgentId),]
+dataset2 <- RetHome[,c(31,8,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:9))
+test_set <- formalsetUnemployed[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:9))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetUnemployed$JFMSpeed = predict(line_reg, test_set)
+```
+
+
+```{r}
+formalsetUnemployed$JFMTime <- formalsetUnemployed$CUMDIST/formalsetUnemployed$JFMSpeed * 60
+formalsetUnemployed$ReachHome <- formalsetUnemployed$LeaveMainTime + formalsetUnemployed$JFMTime
+```
+
+
+
+
+
+
+
+Infants
+
+```{r}
+Infants <- subset(Persons,Persons$MAINACT=="Not Yet at School")
+tripInfants <- Trips[Trips$PERSID %in% Infants$PERSID,]
+Stops <- Stops[Stops$PERSID %in% Infants$PERSID,]
+formalsetInfants <- subset(PersonsSuburb, PersonsSuburb$MainAct=="Not Yet at School")
+formalsetInfants$ANSZCO1 <- formalsetInfants$MainAct
+```
+
+
+```{r, fig.width=15, fig.height=10}
+RetMainAct <- subset(tripInfants, tripInfants$DESTPURP1 == "Buy Something"|tripInfants$DESTPURP1=="Personal Business"|tripInfants$DESTPURP1=="Recreational"|tripInfants$DESTPURP1=="Social")
+RetMainAct$LINKMODE <- as.factor(as.character(RetMainAct$LINKMODE))
+persInfants <- Persons[Persons$PERSID %in% RetMainAct$PERSID,]
+table(tripInfants$DESTPURP1)
+RetMainAct <- RetMainAct[order(RetMainAct$PERSID),]
+persInfants <- persInfants[order(persInfants$PERSID),]
+b=1
+for (a in 1:nrow(persInfants)){
+  while (as.character(RetMainAct$PERSID[b])==as.character(persInfants$PERSID[a])&&!is.na(RetMainAct$PERSID[b])){
+    RetMainAct$AGE[b] <- persInfants$AGE[a]
+    RetMainAct$SEX[b] <- persInfants$SEX[a]
+    RetMainAct$AgeGroup[b] <- persInfants$AgeGroup_RW[a]
+    b=b+1
+  }
+}
+ggplot(RetMainAct, aes(x=RetMainAct$DESTPURP2,y=as.numeric(RetMainAct$AGE)))+geom_boxplot() 
+RetMainAct <- subset(RetMainAct, RetMainAct$DESTPURP2=="Ate or drank"|RetMainAct$DESTPURP2=="Bought something"|RetMainAct$DESTPURP2=="Other recreational (eg. exercise)"|RetMainAct$DESTPURP2=="Participated in sport"|RetMainAct$DESTPURP2=="Recreational (NEC)"|RetMainAct$DESTPURP2=="Visited someone"|RetMainAct$DESTPURP2=="Social (NEC)")
+RetMainAct$DESTPURP2 <- as.factor(as.character(RetMainAct$DESTPURP2))
+RetMainAct$AgeGroup <- as.factor(RetMainAct$AgeGroup)
+
+
+```
+anszco
+```{r}
+test_set <-formalsetInfants[,c(1,12)]
+test_set$Rand <- runif(nrow(test_set), 0, 100)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(RetMainAct$DESTPURP2,weights=RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2,weights = RetMainAct$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA))/sum(wtd.table(RetMainAct$DESTPURP2, weights = RetMainAct$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:13){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$MainAct[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+
+test_set <- test_set[order(test_set$AgentId),]
+formalsetInfants$ANSZCO1 <- test_set$MainAct
+
+
+
+
+```
+mode
+```{r}
+
+test_data <-formalsetInfants[,c(1,14)]
+test_data$Rand <- runif(nrow(test_data), 0, 100)
+test_data$cat <- as.integer(as.factor(test_data$ANSZCO1))
+training_data <- RetMainAct
+training_data$cat <- as.integer(as.factor(training_data$DESTPURP2))
+
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==1)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==1)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- test_set
+
+
+for (a in 2:13){
+training_set <- subset(training_data,as.numeric(training_data$DESTPURP2)==a)
+test_set<-subset(test_data,as.numeric(as.factor(test_data$ANSZCO1))==a)
+test_set <- test_set[order(test_set$Rand),]
+WorkCat<-as.data.frame(cumsum(wtd.table(training_set$LINKMODE,weights=training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE,weights = training_set$CW_ADTRIPWGT_LGA))*100)
+WorkCat$Act <- rownames(WorkCat)
+rownames(WorkCat)<-c()
+WorkCat$Wt <- WorkCat$`cumsum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA))/sum(wtd.table(training_set$LINKMODE, weights = training_set$CW_ADTRIPWGT_LGA)) * 100`
+WorkCat <- WorkCat[,c(-1)]
+j=1
+for (i in 1:12){
+  while (test_set$Rand[j]<WorkCat$Wt[i]&&!is.na(test_set$Rand[j])){
+    test_set$LINKMODE[j] <- WorkCat$Act[i] 
+    j=j+1
+  }
+}
+finalset <- rbind(finalset,test_set)
+}
+finalset <- finalset[order(finalset$AgentId),]
+formalsetInfants$LINKMODE <- finalset$LINKMODE
+```
+startime
+```{r}
+formalsetInfants <- formalsetInfants[order(formalsetInfants$AgentId),]
+formalsetInfants$AgeGroup <- as.factor(formalsetInfants$AgeGroup)
+RetMainAct$STARTIME <- as.numeric(RetMainAct$STARTIME)
+dataset2 <- RetMainAct[,c(91,92,23,8)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:7))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetInfants[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:7))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$STARTIME,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetInfants$STARTIME = predict(line_reg, test_set)
+```
+
+duration
+```{r}
+
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,92,23,35)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:7))
+dataset2$SEX = factor(as.factor(dataset2$SEX),
+                       labels = c(1, 2))
+test_set <- formalsetInfants[,c(2,3,14)]
+
+test_set$SEX = factor(as.factor(test_set$Gender),
+                       labels = c(1, 2))
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:7))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-c(2,3)]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$DURATION,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetInfants$DURATION = predict(line_reg, test_set)
+```
+
+
+distance
+```{r}
+formalsetInfants <- formalsetInfants[order(formalsetInfants$AgentId),]
+formalsetInfants$AgeGroup <- as.factor(formalsetInfants$AgeGroup)
+RetMainAct$DURATION <- as.numeric(RetMainAct$DURATION)
+dataset2 <- RetMainAct[,c(91,31,23,27)]
+dataset2$DESTPURP2 = factor(dataset2$DESTPURP2,
+                       labels = c(1:7))
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:6))
+test_set <- formalsetInfants[,c(2,14,15)]
+test_set$DESTPURP2 = factor(test_set$ANSZCO1,
+                       labels = c(1:7))
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:6))
+names(test_set)[1]<-"AGE"
+test_set <- test_set[,-2]
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-4],y=dataset2$CUMDIST,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetInfants$CUMDIST = predict(line_reg, test_set)
+```
+
+
+```{r}
+RetMainAct$SPEED <- RetMainAct$CUMDIST/RetMainAct$TRAVTIME * 60
+```
+
+Speed
+```{r}
+formalsetInfants <- formalsetInfants[order(formalsetInfants$AgentId),]
+dataset2 <- RetMainAct[,c(31,8,94)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:6))
+test_set <- formalsetInfants[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:6))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetInfants$JTMSpeed = predict(line_reg, test_set)
+
+```
+
+
+```{r}
+formalsetInfants$JTMTime <- formalsetInfants$CUMDIST/formalsetInfants$JTMSpeed * 60
+formalsetInfants$ReachMainTime <- formalsetInfants$STARTIME + formalsetInfants$JTMTime
+formalsetInfants$LeaveMainTime <- formalsetInfants$ReachMainTime+formalsetInfants$DURATION
+```
+
+Just using Start time and Vehicle
+```{r}
+RetHome <- subset(tripInfants, tripInfants$DESTPURP1 == "At or Go Home")
+RetHome <- subset(RetHome, RetHome$LINKMODE!="Bicycle")
+RetHome$SPEED <- RetHome$CUMDIST/RetHome$TRAVTIME * 60
+
+formalsetInfants <- formalsetInfants[order(formalsetInfants$AgentId),]
+dataset2 <- RetHome[,c(31,8,91)]
+
+dataset2$LINKMODE = factor(dataset2$LINKMODE, labels = c(1:6))
+test_set <- formalsetInfants[,c(15,16)]
+
+test_set$LINKMODE = factor(test_set$LINKMODE, labels = c(1:6))
+finalerr <- 1000
+idealtrees = 0
+
+line_reg = randomForest(x=dataset2[-3],y=dataset2$SPEED,ntree = 100,weights = RetMainAct$CW_ADTRIPWGT_LGA)
+formalsetInfants$JFMSpeed = predict(line_reg, test_set)
+```
+
+
+```{r}
+formalsetInfants$JFMTime <- formalsetInfants$CUMDIST/formalsetInfants$JFMSpeed * 60
+formalsetInfants$ReachHome <- formalsetInfants$LeaveMainTime + formalsetInfants$JFMTime
+```
+
+
+```{r}
+formalsetNonWork <- formalsetHomeKeeper
+formalsetNonWork <- rbind(formalsetNonWork,formalsetInfants)
+formalsetNonWork <- rbind(formalsetNonWork,formalsetRetired)
+formalsetNonWork <- rbind(formalsetNonWork,formalsetUnemployed)
+```
+
+
+
+
+
+
+
+
+
